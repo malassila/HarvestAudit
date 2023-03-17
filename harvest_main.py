@@ -6,6 +6,7 @@ import random
 import tkinter as tk
 from tkinter import ttk
 import pyperclip
+from datetime import datetime
 from tkinter import *
 import tkinter.messagebox as messagebox
 from tkinter.scrolledtext import ScrolledText
@@ -34,6 +35,17 @@ mysql_database = 'sellercloud'
 mysql_user = 'matt'
 mysql_password = 'ghXryPCSP2022!'
 
+log_path = "C:\\HarvestAudit\\log.txt"
+
+# Define a function to log messages
+def log_message(message, log_type="info"):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    with open(log_path, "a") as log_file:
+        log_file.write(f"{timestamp} [{log_type.upper()}] {message}\n")
+        
+
+
 def fetch_data(listbox):
     global selected_button, server_button, ws_button, other_button, background_color, original_items
     # change all three buttons to default state
@@ -51,6 +63,10 @@ def fetch_data(listbox):
         ORDER BY t.AggregateQty"""
         
     chassis_data = query_database(query)
+    
+    results = len(chassis_data)
+    
+    log_message(f"Chassis data results: {results}")
 
     # Clear the listbox
     listbox.delete(0, tk.END)
@@ -100,6 +116,10 @@ def fetch_and_update_labels(event, listbox, value1, value2, table1):
         cursor.execute(query, (selected_item,))
         
         result = cursor.fetchall()
+        
+        count = len(result)
+        
+        log_message(f"Location notes results: {count}")
 
         location_notes = result[0] if result else '-'
 
@@ -116,6 +136,10 @@ def fetch_and_update_labels(event, listbox, value1, value2, table1):
 
         cursor.execute(query, (selected_item,))
         results = cursor.fetchall()
+        
+        count = len(results)
+        
+        log_message(f"Parts results: {count}")
 
         # Clear table1
         for row in table1.get_children():
@@ -162,7 +186,11 @@ def search_and_update_treeview(*args):
         for row in cursor.fetchall():
             treeview_values = (row[0], row[1], row[2], int(row[3]) if row[3] else 0, '-')
             table2.insert('', 'end', values=treeview_values)
-
+    
+    except Exception as err:
+        log_message(f"Error: {err}")
+        log_message(f"Query: {query}")
+        
     finally:
         cursor.close()
         connection.close()
@@ -173,13 +201,7 @@ def fetch_sku(search_box, listbox):
     search_keyword = search_keyword.replace(" ", "%")
 
     # Connect to the database
-    connection = mysql.connector.connect(
-        host='localhost',
-        port=3306,
-        database=mysql_database,
-        user=mysql_user,
-        password=mysql_password
-    )
+    connection = get_connection()
 
     try:
         # Create a cursor object to interact with the database
@@ -207,6 +229,9 @@ def fetch_sku(search_box, listbox):
                         listbox.insert(tk.END, item)
         else:
             messagebox.showwarning(title='Warning', message='No PURCHASEGROUP found for the given SKU.')
+    except Exception as err:
+        log_message(f"Error: {err}")
+        log_message(f"Query: {query}")
 
     finally:
         cursor.close()
