@@ -1,5 +1,4 @@
 qrcode
-webbrowser
 pyperclip
 mysql-connector-python
 Pillow
