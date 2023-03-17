@@ -1,0 +1,7 @@
+qrcode
+webbrowser
+pyperclip
+mysql-connector-python
+Pillow
+Jinja2
+pdfkit

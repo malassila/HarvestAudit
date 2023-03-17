@@ -23,8 +23,11 @@ def on_search_box_focus_in(event, search_box):
 def on_search_box_focus_out(event, search_box):
     search_box.config(bg='#5c596b', fg=white_foreground_color)
     
-def on_listbox_enter(event):
+def on_widget_enter(event):
     event.widget.config(cursor="hand2")
 
-def on_listbox_leave(event):
+def on_widget_leave(event):
     event.widget.config(cursor="")
+
+def on_hover(event, widget):
+    event.widget.config()

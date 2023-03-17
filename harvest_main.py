@@ -15,7 +15,7 @@ from PIL import Image, ImageTk
 from jinja2 import Template
 import pdfkit
 from tempfile import NamedTemporaryFile
-from effects import on_enter, on_leave, on_search_box_focus_in, on_search_box_focus_out, on_listbox_enter, on_listbox_leave
+from effects import on_enter, on_leave, on_search_box_focus_in, on_search_box_focus_out, on_widget_enter, on_widget_leave
 from database import get_connection, query_database
 
 # initialize the global variables
@@ -459,7 +459,7 @@ class SplashScreen(tk.Toplevel):
         self.progress = ttk.Progressbar(self, orient=HORIZONTAL, length=400, mode='determinate')
         self.progress.pack(pady=20)
         
-        self.image_path = "C:\\HarvestApplication\\images\\Logo\\PCSP_Light.png"
+        self.image_path = "C:\\HarvestAudit\\images\\Logo\\PCSP_Light.png"
         self.image = Image.open(self.image_path)
         self.image = self.image.resize((288, 192), Image.ANTIALIAS)
         
@@ -575,6 +575,10 @@ def view_on_sellercloud(table2):
     else:
         messagebox.showwarning(title='Warning', message='Please select a row first.')
 
+def open_pcsp():
+    url = "https://pcserverandparts.com/"
+    webbrowser.open_new_tab(url)
+    
 def update_button_state(treeview, button):
     if treeview.selection():
         button.config(state=tk.NORMAL)
@@ -645,16 +649,33 @@ search_var = tk.StringVar()
 left_frame = tk.Frame(root, bg='#26242f', width=300)
 left_frame.pack(side='left', fill='y')
 
-image_path = "C:\\Users\\mlassila\\OneDrive - PcServerAndParts\\Desktop\\Logo files\\Logo with tagline\\Light.png"
-image = Image.open(image_path)
-image = image.resize((96, 64), Image.ANTIALIAS)
+image_frame = tk.Frame(left_frame, bg='#26242f')
+image_frame.pack(side='top', fill='x')
 
-logo = ImageTk.PhotoImage(image)
+pcsp_logo_path = "C:\\HarvestAudit\\images\\Logo\\PCSP_Light.png"
+pcsp_logo = Image.open(pcsp_logo_path)
+pcsp_logo = pcsp_logo.resize((96, 64), Image.ANTIALIAS)
+
+pcsp_logo = ImageTk.PhotoImage(pcsp_logo)
 
 # Create a canvas for the image
-canvas = tk.Canvas(left_frame, width=96, height=64, bg='#26242f', highlightthickness=0)
-canvas.pack()
-canvas.create_image(0, 0, anchor=tk.NW, image=logo)
+canvas = tk.Canvas(image_frame, width=96, height=64, bg='#26242f', highlightthickness=0)
+canvas.pack(side='left')
+canvas.create_image(0, 0, anchor=tk.NW, image=pcsp_logo)
+canvas.bind("<Enter>", on_widget_enter)
+canvas.bind("<Leave>", on_widget_leave)
+canvas.bind('<ButtonRelease-1>', lambda event: open_pcsp())
+
+# sc_logo_path = "C:\HarvestAudit\images\logo\SC_Original.png"
+# sc_logo = Image.open(sc_logo_path)
+# sc_logo = sc_logo.resize((200, 15), Image.ANTIALIAS)
+
+# sc_logo = ImageTk.PhotoImage(sc_logo)
+
+# # Create a canvas for the image
+# canvas = tk.Canvas(image_frame, width=96, height=64, bg='#26242f', highlightthickness=0)
+# canvas.pack(side='left')
+# canvas.create_image(0, 0, anchor=tk.NW, image=sc_logo)
 
 # create button bar
 button_bar1 = tk.Frame(left_frame)
@@ -711,8 +732,8 @@ listbox.pack(padx=10, pady=10, fill='both', expand=True)
 
 # configure listbox padding
 listbox.configure(background='#26242f', foreground='#ffffff', bd=0, font=('Arial', 12, 'bold'), selectbackground='#bfd660', selectforeground='black', highlightcolor='#26242f', borderwidth=10, relief=tk.FLAT)
-listbox.bind("<Enter>", on_listbox_enter)
-listbox.bind("<Leave>", on_listbox_leave)
+listbox.bind("<Enter>", on_widget_enter)
+listbox.bind("<Leave>", on_widget_leave)
 listbox.bind("<ButtonRelease-1>", lambda event: fetch_and_update_labels(event, listbox, value1, value2, table1))
 
 # create right frame
