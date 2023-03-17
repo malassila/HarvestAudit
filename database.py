@@ -1,11 +1,20 @@
 import mysql.connector
-from harvest_main import log_message, log_path
+from datetime import datetime
 
 mysql_host = '192.168.1.160'
 mysql_database = 'sellercloud'
 mysql_user = 'matt'
 mysql_password = 'ghXryPCSP2022!'
 
+
+log_path = "C:\\HarvestAudit\\log.txt"
+
+# Define a function to log messages
+def log_message(message, log_type="info"):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    with open(log_path, "a") as log_file:
+        log_file.write(f"{timestamp} [{log_type.upper()}] {message}\n")
 
 def get_connection():
     try:
