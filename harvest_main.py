@@ -29,7 +29,7 @@ white_foreground_color = '#ffffff'
 blue_foreground_color = '#6da7d2'
 highlight_color = '#bfd660'
 
-mysql_host = 'localhost'
+mysql_host = '192.168.1.160'
 mysql_database = 'sellercloud'
 mysql_user = 'matt'
 mysql_password = 'ghXryPCSP2022!'
@@ -97,9 +97,9 @@ def fetch_and_update_labels(event, listbox, value1, value2, table1):
         cursor = connection.cursor()
 
         query = "SELECT LocationNotes FROM chassisproduct WHERE PURCHASEGROUP = %s"
-
-
-        result = query_database(query)
+        cursor.execute(query, (selected_item,))
+        
+        result = cursor.fetchall()
 
         location_notes = result[0] if result else '-'
 
@@ -831,31 +831,43 @@ button_bar2.config(background='#2f2d38')
 btn_print = tk.Button(button_bar2, text='Print Selected')
 btn_print.pack(side='left', padx=10, pady=10)
 btn_print.config(background=blue_foreground_color)
+btn_print.bind('<Enter>', lambda event: on_widget_enter)
+btn_print.bind('<Leave>', lambda event: on_widget_leave)
 btn_print.bind('<ButtonRelease-1>', lambda event: print_selected_row(event, table1))
 
 btn_view_on_google = tk.Button(button_bar2, text='Google')
 btn_view_on_google.pack(side='right', padx=10, pady=10)
 btn_view_on_google.config(background=highlight_color)
+btn_view_on_google.bind('<Enter>', lambda event: on_widget_enter)
+btn_view_on_google.bind('<Leave>', lambda event: on_widget_leave)
 btn_view_on_google.bind('<ButtonRelease-1>', lambda event: view_on_google(table2))
 
 btn_view_on_sellercloud = tk.Button(button_bar2, text='Sellercloud')
 btn_view_on_sellercloud.pack(side='right', padx=(50, 5), pady=10)
 btn_view_on_sellercloud.config(background=blue_foreground_color)
+btn_view_on_sellercloud.bind('<Enter>', lambda event: on_widget_enter)
+btn_view_on_sellercloud.bind('<Leave>', lambda event: on_widget_leave)
 btn_view_on_sellercloud.bind('<ButtonRelease-1>', lambda event: view_on_sellercloud(table2))
 
 btn_add_to_harvest = tk.Button(button_bar2, text='Add to Harvestable')
 btn_add_to_harvest.pack(side='right', padx=10, pady=10)
 btn_add_to_harvest.config(background=highlight_color, state=tk.DISABLED)
+btn_add_to_harvest.bind('<Enter>', lambda event: on_widget_enter)
+btn_add_to_harvest.bind('<Leave>', lambda event: on_widget_leave)
 btn_add_to_harvest.bind('<ButtonRelease-1>', lambda event: add_to_harvestable(event, table2, table1, value1))
 
 btn_remove_harvest = tk.Button(button_bar2, text='Remove from Harvestable')
 btn_remove_harvest.pack(side='right', padx=10, pady=10)
 btn_remove_harvest.config(background='red', state=tk.DISABLED)
+btn_remove_harvest.bind('<Enter>', lambda event: on_widget_enter)
+btn_remove_harvest.bind('<Leave>', lambda event: on_widget_leave)
 btn_remove_harvest.bind('<ButtonRelease-1>', lambda event: remove_from_harvestable(event, table1, table2, value1))
 
 btn_edit_max_qty = tk.Button(button_bar2, text='Edit Max Qty')
 btn_edit_max_qty.pack(side='right', padx=10, pady=10)
 btn_edit_max_qty.config(background=blue_foreground_color)
+btn_edit_max_qty.bind('<Enter>', lambda event: on_widget_enter)
+btn_edit_max_qty.bind('<Leave>', lambda event: on_widget_leave)
 btn_edit_max_qty.bind('<ButtonRelease-1>', lambda event: edit_max_qty(event, table1))
 
 # init_button(btn_print, "", "right")

@@ -1,6 +1,6 @@
 import mysql.connector
 
-mysql_host = 'localhost'
+mysql_host = '192.168.1.160'
 mysql_database = 'sellercloud'
 mysql_user = 'matt'
 mysql_password = 'ghXryPCSP2022!'
