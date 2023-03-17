@@ -80,7 +80,8 @@ def fetch_data(listbox):
     
 def filter_by_product_type(product_type):
     global listbox, original_items
-
+    log_message(f"Filtering by product type: {product_type}")
+    
     if product_type == 'server':
         condition = "ProductType = 'Chassis - Server'"
     elif product_type == 'workstation':

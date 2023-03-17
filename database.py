@@ -39,6 +39,11 @@ def query_database(query_string):
         
         cursor.execute(query_string)
         result = cursor.fetchall()
+        count = len(result)
+        
+        log_message(f'Query: {query_string}')
+        log_message(f'Result count: {count}')
+        return result
     except mysql.connector.Error as error:
         log_message(f'Error while connecting to MySQL: {error}')
         log_message(f'Query: {query_string}')
