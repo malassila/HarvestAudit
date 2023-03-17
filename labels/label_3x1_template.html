@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet">
+    <style>
+        .a1_12 { 
+            overflow:hidden;
+        }
+        .e1_12 { 
+            width:900px;
+            height:300px;
+            position:absolute;
+        }
+        .e1_7 { 
+            color:rgba(0, 0, 0, 1);
+            width:672px;
+            height:223px;
+            position:absolute;
+            left:0px;
+            top:77px;
+            font-family:Inter;
+            text-align:center;
+            font-size:48px;
+            letter-spacing:0;
+        }
+        .e1_6 { 
+            color:rgba(0, 0, 0, 1);
+            width:900px;
+            height:72px;
+            position:absolute;
+            left:0px;
+            top:0px;
+            font-family:Inter;
+            text-align:center;
+            font-size:55px;
+            letter-spacing:0;
+        }
+        .e1_8 { 
+            width:228px;
+            height:228px;
+            position:absolute;
+            left:672px;
+            top:72px;
+            background-image:url(images/qr.png);
+            background-repeat:no-repeat;
+            background-size:cover;
+        }
+        .a1_9 { 
+            border:2px solid rgba(0, 0, 0, 1);
+        }
+        .e1_9 { 
+            width:861px;
+            height:0px;
+            position:absolute;
+            left:19px;
+            top:72px;
+        }        
+    </style>
+</head>
+<body>
+    <div class=e1_12>
+        <!-- This is where I want the SKU to go. It should take up the entire width of the label -->
+        <div  class="e1_6">TTK 741147</div>
+        <!-- This is where I want the Description to go. It should be in a second row on the left taking up around 2/3 or more of the width of the label -->
+        <span  class="e1_7">Asus ROG RTX 3070 8GB GDDR6 DisplayPort HDMI NEW IN BOX</span>
+        <!-- This is where I want the QR Code to go. It should be in a second row on the right taking up around 1/3 or less of the width of the label as a png -->
+        <div class="e1_8"></div>
+        <div class="e1_9"></div>
+    </div>
+</body>
+</html>
