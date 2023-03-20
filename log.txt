@@ -59,3 +59,83 @@
 2023-03-17 14:51:13 [INFO] Parts results: 0
 2023-03-17 14:51:13 [INFO] Location notes results: 1
 2023-03-17 14:51:13 [INFO] Parts results: 0
+2023-03-20 10:54:12 [INFO] Error while connecting to MySQL: 1146 (42S02): Table 'sellercloud.chassisproduct' doesn't exist
+2023-03-20 10:54:12 [INFO] Query: SELECT t.PURCHASEGROUP
+        FROM (
+            SELECT DISTINCT PURCHASEGROUP, AggregateQty
+            FROM chassisproduct
+            WHERE PURCHASEGROUP <> '' AND PURCHASEGROUP IS NOT NULL AND PURCHASEGROUP <> 'nan'
+        ) AS t
+        ORDER BY t.AggregateQty
+2023-03-20 10:54:33 [INFO] Error: 1146 (42S02): Table 'sellercloud.chassisproduct' doesn't exist
+2023-03-20 10:54:33 [INFO] Query: SELECT PURCHASEGROUP, ProductID FROM sellercloud.chassisproduct WHERE UPPER(ProductID) LIKE %s
+2023-03-20 10:56:12 [INFO] Error while connecting to MySQL: 1146 (42S02): Table 'sellercloud.chassisproduct' doesn't exist
+2023-03-20 10:56:12 [INFO] Query: SELECT t.PURCHASEGROUP
+        FROM (
+            SELECT DISTINCT PURCHASEGROUP, AggregateQty
+            FROM chassisproduct
+            WHERE PURCHASEGROUP <> '' AND PURCHASEGROUP IS NOT NULL AND PURCHASEGROUP <> 'nan'
+        ) AS t
+        ORDER BY t.AggregateQty
+2023-03-20 10:56:21 [INFO] Error: 1146 (42S02): Table 'sellercloud.allproducts' doesn't exist
+2023-03-20 10:56:21 [INFO] Query: SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable) FROM sellercloud.allproducts AS ap LEFT JOIN sellercloud.binexport AS be ON ap.ProductID = be.ProductID WHERE ap.ProductType LIKE %s AND ap.ProductName LIKE %s GROUP BY ap.ProductID, ap.ProductType, ap.ProductName;
+2023-03-20 10:56:22 [INFO] Error: 1146 (42S02): Table 'sellercloud.allproducts' doesn't exist
+2023-03-20 10:56:22 [INFO] Query: SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable) FROM sellercloud.allproducts AS ap LEFT JOIN sellercloud.binexport AS be ON ap.ProductID = be.ProductID WHERE ap.ProductType LIKE %s AND ap.ProductName LIKE %s GROUP BY ap.ProductID, ap.ProductType, ap.ProductName;
+2023-03-20 10:56:23 [INFO] Error: 1146 (42S02): Table 'sellercloud.allproducts' doesn't exist
+2023-03-20 10:56:23 [INFO] Query: SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable) FROM sellercloud.allproducts AS ap LEFT JOIN sellercloud.binexport AS be ON ap.ProductID = be.ProductID WHERE ap.ProductType LIKE %s AND ap.ProductName LIKE %s GROUP BY ap.ProductID, ap.ProductType, ap.ProductName;
+2023-03-20 10:56:31 [INFO] Error while connecting to MySQL: 1146 (42S02): Table 'sellercloud.chassisproduct' doesn't exist
+2023-03-20 10:56:31 [INFO] Query: SELECT t.PURCHASEGROUP
+        FROM (
+            SELECT DISTINCT PURCHASEGROUP, AggregateQty
+            FROM chassisproduct
+            WHERE PURCHASEGROUP <> '' AND PURCHASEGROUP IS NOT NULL AND PURCHASEGROUP <> 'nan'
+        ) AS t
+        ORDER BY t.AggregateQty
+2023-03-20 10:57:27 [INFO] Error while connecting to MySQL: 1146 (42S02): Table 'sellercloud.chassisproduct' doesn't exist
+2023-03-20 10:57:27 [INFO] Query: SELECT t.PURCHASEGROUP
+        FROM (
+            SELECT DISTINCT PURCHASEGROUP, AggregateQty
+            FROM chassisproduct
+            WHERE PURCHASEGROUP <> '' AND PURCHASEGROUP IS NOT NULL AND PURCHASEGROUP <> 'nan'
+        ) AS t
+        ORDER BY t.AggregateQty
+2023-03-20 10:57:34 [INFO] Error: 1146 (42S02): Table 'sellercloud.chassisproduct' doesn't exist
+2023-03-20 10:57:34 [INFO] Query: SELECT PURCHASEGROUP, ProductID FROM sellercloud.chassisproduct WHERE UPPER(ProductID) LIKE %s
+2023-03-20 10:57:36 [INFO] Error: 1146 (42S02): Table 'sellercloud.chassisproduct' doesn't exist
+2023-03-20 10:57:36 [INFO] Query: SELECT PURCHASEGROUP, ProductID FROM sellercloud.chassisproduct WHERE UPPER(ProductID) LIKE %s
+2023-03-20 10:57:38 [INFO] Error while connecting to MySQL: 1146 (42S02): Table 'sellercloud.chassisproduct' doesn't exist
+2023-03-20 10:57:38 [INFO] Query: SELECT t.PURCHASEGROUP
+        FROM (
+            SELECT DISTINCT PURCHASEGROUP, AggregateQty
+            FROM chassisproduct
+            WHERE PURCHASEGROUP <> '' AND PURCHASEGROUP IS NOT NULL AND PURCHASEGROUP <> 'nan'
+        ) AS t
+        ORDER BY t.AggregateQty
+2023-03-20 10:57:39 [INFO] Error while connecting to MySQL: 1146 (42S02): Table 'sellercloud.chassisproduct' doesn't exist
+2023-03-20 10:57:39 [INFO] Query: SELECT t.PURCHASEGROUP
+        FROM (
+            SELECT DISTINCT PURCHASEGROUP, AggregateQty
+            FROM chassisproduct
+            WHERE PURCHASEGROUP <> '' AND PURCHASEGROUP IS NOT NULL AND PURCHASEGROUP <> 'nan'
+        ) AS t
+        ORDER BY t.AggregateQty
+2023-03-20 10:59:47 [INFO] Error: 1146 (42S02): Table 'sellercloud.chassisproduct' doesn't exist
+2023-03-20 10:59:47 [INFO] Query: SELECT PURCHASEGROUP, ProductID FROM sellercloud.chassisproduct WHERE UPPER(ProductID) LIKE %s
+2023-03-20 10:59:48 [INFO] Error: 1146 (42S02): Table 'sellercloud.allproducts' doesn't exist
+2023-03-20 10:59:48 [INFO] Query: SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable) FROM sellercloud.allproducts AS ap LEFT JOIN sellercloud.binexport AS be ON ap.ProductID = be.ProductID WHERE ap.ProductType LIKE %s AND ap.ProductName LIKE %s GROUP BY ap.ProductID, ap.ProductType, ap.ProductName;
+2023-03-20 10:59:49 [INFO] Error: 1146 (42S02): Table 'sellercloud.allproducts' doesn't exist
+2023-03-20 10:59:49 [INFO] Query: SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable) FROM sellercloud.allproducts AS ap LEFT JOIN sellercloud.binexport AS be ON ap.ProductID = be.ProductID WHERE ap.ProductType LIKE %s AND ap.ProductName LIKE %s GROUP BY ap.ProductID, ap.ProductType, ap.ProductName;
+2023-03-20 11:04:52 [INFO] Location notes results: 4
+2023-03-20 11:04:52 [INFO] Parts results: 6
+2023-03-20 11:07:03 [INFO] Location notes results: 1
+2023-03-20 11:07:03 [INFO] Parts results: 2
+2023-03-20 11:07:05 [INFO] Location notes results: 2
+2023-03-20 11:07:05 [INFO] Parts results: 3
+2023-03-20 11:07:14 [INFO] Location notes results: 4
+2023-03-20 11:07:14 [INFO] Parts results: 7
+2023-03-20 11:07:27 [INFO] Location notes results: 1
+2023-03-20 11:07:27 [INFO] Parts results: 2
+2023-03-20 11:07:33 [INFO] Location notes results: 4
+2023-03-20 11:07:34 [INFO] Parts results: 6
+2023-03-20 11:22:09 [INFO] Location notes results: 4
+2023-03-20 11:22:09 [INFO] Parts results: 7

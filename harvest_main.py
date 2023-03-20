@@ -30,9 +30,9 @@ white_foreground_color = '#ffffff'
 blue_foreground_color = '#6da7d2'
 highlight_color = '#bfd660'
 
-mysql_host = '192.168.1.160'
+mysql_host = '192.168.1.156'
 mysql_database = 'sellercloud'
-mysql_user = 'matt'
+mysql_user = 'python'
 mysql_password = 'ghXryPCSP2022!'
 
 log_path = "C:\\HarvestAudit\\log.txt"
@@ -52,59 +52,51 @@ def fetch_data(listbox):
     server_button.config(fg='#ffffff', bg=background_color)
     ws_button.config(fg='#ffffff', bg=background_color)
     other_button.config(fg='#ffffff', bg=background_color)
+    # Connect to the MySQL database
+    connection = mysql.connector.connect(host=mysql_host,
+                                         port=3306,
+                                         database=mysql_database,
+                                         user=mysql_user,
+                                         password=mysql_password)
 
-    # Execute the SQL query using an inner query to sort by AggregateQty first then query the PURCHASEGROUP column
-    query = """SELECT t.PURCHASEGROUP
-        FROM (
-            SELECT DISTINCT PURCHASEGROUP, AggregateQty
-            FROM chassisproduct
-            WHERE PURCHASEGROUP <> '' AND PURCHASEGROUP IS NOT NULL AND PURCHASEGROUP <> 'nan'
-        ) AS t
-        ORDER BY t.AggregateQty"""
-        
-    chassis_data = query_database(query)
-    
-    results = len(chassis_data)
-    
-    log_message(f"Chassis data results: {results}")
+    try:
+        # Create a cursor object to interact with the database
+        cursor = connection.cursor()
 
-    # Clear the listbox
-    listbox.delete(0, tk.END)
+        # Execute the SQL query using an inner query to sort by AggregateQty first then query the PURCHASEGROUP column
+        query = """SELECT t.PURCHASEGROUP
+           FROM (
+               SELECT DISTINCT PURCHASEGROUP, AggregateQty
+               FROM ChassisProduct
+               WHERE PURCHASEGROUP <> '' AND PURCHASEGROUP IS NOT NULL AND PURCHASEGROUP <> 'nan'
+           ) AS t
+           ORDER BY t.AggregateQty"""
 
-    # Add the fetched data to the listbox and the original_items list
-    for chassis_tuple in chassis_data:
-        chassis = chassis_tuple[0]  # Unpack the tuple to remove the brackets
-        listbox.insert(tk.END, chassis)
-        original_items.append(chassis)
 
-    
-def filter_by_product_type(product_type):
-    global listbox, original_items
-    log_message(f"Filtering by product type: {product_type}")
-    
-    if product_type == 'server':
-        condition = "ProductType = 'Chassis - Server'"
-    elif product_type == 'workstation':
-        condition = "ProductType = 'Chassis - Workstation'"
-    else:
-        condition = "ProductType NOT IN ('Chassis - Server', 'Chassis - Workstation')"
+        cursor.execute(query)
 
-    query = f"SELECT DISTINCT PURCHASEGROUP FROM chassisproduct WHERE {condition} AND PURCHASEGROUP <> '' AND PURCHASEGROUP IS NOT NULL AND PURCHASEGROUP <> 'nan' ORDER BY PURCHASEGROUP ASC"
-    
-    chassis_data = query_database(query)
-    
-    listbox.delete(0, tk.END)
-    # original_items.clear()
+        # Fetch the results
+        chassis_data = cursor.fetchall()
 
-    for chassis_tuple in chassis_data:
-        chassis = chassis_tuple[0]  # Unpack the tuple
-        listbox.insert(tk.END, chassis)
+        # Clear the listbox
+        listbox.delete(0, tk.END)
+
+        # Add the fetched data to the listbox and the original_items list
+        for chassis_tuple in chassis_data:
+            chassis = chassis_tuple[0]  # Unpack the tuple to remove the brackets
+            listbox.insert(tk.END, chassis)
+            original_items.append(chassis)
+
+    finally:
+        # Close the cursor and the connection
+        cursor.close()
+        connection.close()
             
         
 def fetch_and_update_labels(event, listbox, value1, value2, table1):
     selected_item = listbox.get(listbox.curselection())
 
-    connection = mysql.connector.connect(host='localhost',
+    connection = mysql.connector.connect(host=mysql_host,
                                          port=3306,
                                          database=mysql_database,
                                          user=mysql_user,
@@ -113,7 +105,7 @@ def fetch_and_update_labels(event, listbox, value1, value2, table1):
         # Create a cursor object to interact with the database
         cursor = connection.cursor()
 
-        query = "SELECT LocationNotes FROM chassisproduct WHERE PURCHASEGROUP = %s"
+        query = "SELECT LocationNotes FROM ChassisProduct WHERE PURCHASEGROUP = %s"
         cursor.execute(query, (selected_item,))
         
         result = cursor.fetchall()
@@ -130,8 +122,8 @@ def fetch_and_update_labels(event, listbox, value1, value2, table1):
         # Query for parts associated with the selected purchase group
         query = """SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable) 
                    FROM sellercloud.harvest_parts AS hp
-                   LEFT JOIN sellercloud.allproducts AS ap ON hp.PartProductID = ap.ProductID
-                   LEFT JOIN sellercloud.binexport AS be ON be.ProductID = ap.ProductID
+                   LEFT JOIN sellercloud.AllProducts AS ap ON hp.PartProductID = ap.ProductID
+                   LEFT JOIN sellercloud.BinExport AS be ON be.ProductID = ap.ProductID
                    WHERE hp.ChassisPurchaseGroup = %s
                    GROUP BY ap.ProductID, ap.ProductName, ap.ProductType"""
 
@@ -164,7 +156,7 @@ def search_and_update_treeview(*args):
         
     search_keyword = search_keyword.replace(" ", "%")
 
-    connection = mysql.connector.connect(host='localhost',
+    connection = mysql.connector.connect(host=mysql_host,
                                          port=3306,
                                          database=mysql_database,
                                          user=mysql_user,
@@ -173,8 +165,8 @@ def search_and_update_treeview(*args):
         cursor = connection.cursor()
 
         query = ("SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable) "
-                 "FROM sellercloud.allproducts AS ap "
-                 "LEFT JOIN sellercloud.binexport AS be ON ap.ProductID = be.ProductID "
+                 "FROM sellercloud.AllProducts AS ap "
+                 "LEFT JOIN sellercloud.BinExport AS be ON ap.ProductID = be.ProductID "
                  "WHERE ap.ProductType LIKE %s AND ap.ProductName LIKE %s "
                  "GROUP BY ap.ProductID, ap.ProductType, ap.ProductName;")
         cursor.execute(query, ("%part%", f"%{search_keyword}%"))
@@ -209,7 +201,7 @@ def fetch_sku(search_box, listbox):
         cursor = connection.cursor()
 
         # Query the sellercloud.chassisproduct table to find the PURCHASEGROUP for the given ProductID (keyword)
-        query = "SELECT PURCHASEGROUP, ProductID FROM sellercloud.chassisproduct WHERE UPPER(ProductID) LIKE %s"
+        query = "SELECT PURCHASEGROUP, ProductID FROM sellercloud.ChassisProduct WHERE UPPER(ProductID) LIKE %s"
         cursor.execute(query, (f"%{search_keyword}%",))
 
         results = cursor.fetchall()
@@ -298,7 +290,7 @@ def add_to_harvestable(event, table2, table1, value1):
         # Get all items in table1
         existing_items = table1.get_children()
 
-        connection = mysql.connector.connect(host='localhost',
+        connection = mysql.connector.connect(host=mysql_host,
                                              port=3306,
                                              database=mysql_database,
                                              user=mysql_user,
@@ -367,7 +359,7 @@ def remove_from_harvestable(event, table1, table2, value1):
         if not user_response:
             return
 
-        connection = mysql.connector.connect(host='localhost',
+        connection = mysql.connector.connect(host=mysql_host,
                                             port=3306,
                                             database=mysql_database,
                                             user=mysql_user,

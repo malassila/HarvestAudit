@@ -1,9 +1,9 @@
 import mysql.connector
 from datetime import datetime
 
-mysql_host = '192.168.1.160'
+mysql_host = '192.168.1.156'
 mysql_database = 'sellercloud'
-mysql_user = 'matt'
+mysql_user = 'python'
 mysql_password = 'ghXryPCSP2022!'
 
 
@@ -50,4 +50,4 @@ def query_database(query_string):
     finally:
         cursor.close()
         connection.close()
-    return result
+    
