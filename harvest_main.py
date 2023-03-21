@@ -1,6 +1,12 @@
 import threading
 import time
 import qrcode
+import asyncio
+import json
+import os
+import win32print
+from win32print import JOB_INFO_1
+from win32com.client import Dispatch
 import webbrowser
 import random
 import tkinter as tk
@@ -17,7 +23,9 @@ from jinja2 import Template
 import pdfkit
 from tempfile import NamedTemporaryFile
 from effects import on_enter, on_leave, on_search_box_focus_in, on_search_box_focus_out, on_widget_enter, on_widget_leave
+from browser import edit_max_qty, open_pcsp, view_on_google, view_on_sellercloud
 from database import get_connection, query_database
+from print import print_dymo_label
 
 # initialize the global variables
 selected_button = None
@@ -43,6 +51,23 @@ def log_message(message, log_type="info"):
     
     with open(log_path, "a") as log_file:
         log_file.write(f"{timestamp} [{log_type.upper()}] {message}\n")
+        
+def save_data():
+    data = {
+        "search_box_value": search_var.get(),
+        "listbox_selection": listbox.get(listbox.curselection()) if listbox.curselection() else None,
+        "value1": value1.cget("text"),
+        "value2": value2.cget("text"),
+        "value3": value3.cget("text"),
+        "parts_search_box2_value": parts_search_var2.get(),
+        "table2_selection": table2.item(table2.selection())["values"] if table2.selection() else None,
+    }
+    with open("C:\\HarvestAudit\\data\\ui_state.json", "w") as f:
+        json.dump(data, f)
+        
+    threading.Timer(20.0, save_data).start() # call this function again after 20 seconds
+
+
         
 
 
@@ -105,30 +130,44 @@ def fetch_and_update_labels(event, listbox, value1, value2, table1):
         # Create a cursor object to interact with the database
         cursor = connection.cursor()
 
-        query = "SELECT LocationNotes FROM ChassisProduct WHERE PURCHASEGROUP = %s"
+        query = "SELECT LocationNotes FROM ChassisProduct WHERE PURCHASEGROUP = %s LIMIT 1"
+
         cursor.execute(query, (selected_item,))
         
         result = cursor.fetchall()
+        
+        print(result)
         
         count = len(result)
         
         log_message(f"Location notes results: {count}")
 
         location_notes = result[0] if result else '-'
+        # location_notes = location_notes.replace('nan', '-').replace('{', '').replace('}', '')
 
         value1.config(text=selected_item)
         value2.config(text=location_notes)
 
         # Query for parts associated with the selected purchase group
-        query = """SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable) 
-                   FROM sellercloud.harvest_parts AS hp
-                   LEFT JOIN sellercloud.AllProducts AS ap ON hp.PartProductID = ap.ProductID
-                   LEFT JOIN sellercloud.BinExport AS be ON be.ProductID = ap.ProductID
-                   WHERE hp.ChassisPurchaseGroup = %s
-                   GROUP BY ap.ProductID, ap.ProductName, ap.ProductType"""
+        query = """
+            SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable), ap.InventoryHighStockNotice
+            FROM sellercloud.harvest_parts AS hp
+            LEFT JOIN sellercloud.AllProducts AS ap ON hp.PartProductID = ap.ProductID
+            LEFT JOIN sellercloud.BinExport AS be ON be.ProductID = ap.ProductID
+            WHERE hp.ChassisPurchaseGroup = %s AND ap.ProductID IS NOT NULL
+            GROUP BY ap.ProductID, ap.ProductName, ap.ProductType, ap.InventoryHighStockNotice
 
-        cursor.execute(query, (selected_item,))
+            UNION ALL
+
+            SELECT 'CASE COMPONENT', hp.PartProductID, hp.PartProductID, NULL, NULL
+            FROM sellercloud.harvest_parts AS hp
+            LEFT JOIN sellercloud.AllProducts AS ap ON hp.PartProductID = ap.ProductID
+            WHERE hp.ChassisPurchaseGroup = %s AND ap.ProductID IS NULL
+        """
+        cursor.execute(query, (selected_item, selected_item))
         results = cursor.fetchall()
+        
+        print(results)
         
         count = len(results)
         
@@ -137,10 +176,21 @@ def fetch_and_update_labels(event, listbox, value1, value2, table1):
         # Clear table1
         for row in table1.get_children():
             table1.delete(row)
+        
 
         # Add the fetched parts to table1
         for result in results:
-            table1.insert('', 'end', values=result)
+            if result[4] is not None:
+                high_stock_notice = str(result[4])
+                if high_stock_notice == "nan":
+                    high_stock_notice = "-"
+                else:
+                    # convert to int
+                    high_stock_notice = int(float(high_stock_notice))
+            else:
+                high_stock_notice = "-"
+            table1.insert('', 'end', values=(result[0], result[1], result[2], result[3], high_stock_notice))
+
         
         # get the number of parts in the table
         count = len(table1.get_children())
@@ -153,6 +203,9 @@ def fetch_and_update_labels(event, listbox, value1, value2, table1):
 
 def search_and_update_treeview(*args):
     search_keyword = parts_search_var2.get().lower()
+    # only search if the search keyword is at least 2 characters long
+    if len(search_keyword) < 3:
+        return
         
     search_keyword = search_keyword.replace(" ", "%")
 
@@ -164,11 +217,11 @@ def search_and_update_treeview(*args):
     try:
         cursor = connection.cursor()
 
-        query = ("SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable) "
+        query = ("SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable), ap.InventoryHighStockNotice "
                  "FROM sellercloud.AllProducts AS ap "
                  "LEFT JOIN sellercloud.BinExport AS be ON ap.ProductID = be.ProductID "
                  "WHERE ap.ProductType LIKE %s AND ap.ProductName LIKE %s "
-                 "GROUP BY ap.ProductID, ap.ProductType, ap.ProductName;")
+                 "GROUP BY ap.ProductID, ap.ProductType, ap.ProductName, ap.InventoryHighStockNotice;")
         cursor.execute(query, ("%part%", f"%{search_keyword}%"))
 
         # Clear the existing items in the TreeView
@@ -178,8 +231,16 @@ def search_and_update_treeview(*args):
         # Insert the new items into the TreeView
         for row in cursor.fetchall():
             treeview_values = (row[0], row[1], row[2], int(row[3]) if row[3] else 0, '-')
+            if treeview_values[3] != '-':
+                high_stock_notice = str(treeview_values[3])
+                if high_stock_notice == "nan":
+                    high_stock_notice = "-"
+                if high_stock_notice != "-":
+                    high_stock_notice = int(high_stock_notice)
+                treeview_values = (treeview_values[0], treeview_values[1], treeview_values[2],  treeview_values[2], high_stock_notice)
             table2.insert('', 'end', values=treeview_values)
-    
+
+
     except Exception as err:
         log_message(f"Error: {err}")
         log_message(f"Query: {query}")
@@ -437,28 +498,62 @@ def create_label(sku, description):
         pdfkit.from_string(html_template, pdf_file.name)
         os.startfile(pdf_file.name, "print")
 
-def print_selected_row(event, table):
-    selected_items = table.selection()
+import win32print
 
-    if selected_items:
-        item = table.item(selected_items[0])
-        values = item['values']
-        sku = values[1]
-        description = values[2]
+def print_selected_row(event, table, selected_printer, qty_var, initials_entry):
+    printer_name = selected_printer.get()
+    initials = initials_entry.get()
 
-        create_label(sku, description)
-    else:
-        print("No row is selected")
+    if printer_name == "Select a printer":
+        messagebox.showwarning(title='Warning', message='Please select a printer before printing.')
+        return
+
+    qty = qty_var.get()
+
+    if not qty or not qty.isdigit() or int(qty) < 1:
+        messagebox.showwarning(title='Warning', message='Please enter a valid quantity.')
+        return
+
+    if initials == "-" or initials == "":
+        messagebox.showwarning(title='Warning', message='Please enter your initials.')
+        return
+
+    # Get the selected row from the table
+    qty = int(qty)
+    initials = initials.upper()
+    
+    selected_row = table.selection()[0]
+    sku = table.item(selected_row, "values")[1]
+    description = table.item(selected_row, "values")[2]
+
+    try:
+        print_dymo_label(printer_name, qty, sku, description, initials)
+        print("Printing")
+    except Exception as e:
+        # There was an error starting the print job, so close the printer handle and return
+        print("Error printing")
+        print(e.with_traceback)
+        return
 
 
-# def get_dymo_printer_name():
-#     printers = win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS)
-#     for printer in printers:
-#         if 'DYMO LabelWriter 450 Turbo' in printer[2]:
-#             return printer[2]
-#     return None
 
 
+def get_dymo_printer_name():
+    printers = win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS)
+    for printer in printers:
+        if 'DYMO LabelWriter 450 Turbo' in printer[2]:
+            print(printer[2])
+            print("Printer found")
+            return printer[2]
+    return None
+
+def get_printer_list():
+    # Get a list of all printers installed on the system
+    printers = win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS)
+    printer_list = []
+    for printer in printers:
+        printer_list.append(printer[2])
+    return printer_list
        
 class SplashScreen(tk.Toplevel):
     def __init__(self, parent):
@@ -472,7 +567,9 @@ class SplashScreen(tk.Toplevel):
         # Create a label for the splash screen
         splash_label = tk.Label(self, text="Please wait while we load the necessary data...", bg=background_color, fg='#ffffff', font=('Arial', 16, 'bold'))
         splash_label.pack(pady=20)
+        
 
+        
         # Create a progress bar for the splash screen
         self.progress = ttk.Progressbar(self, orient=HORIZONTAL, length=400, mode='determinate')
         self.progress.pack(pady=20)
@@ -493,6 +590,7 @@ class SplashScreen(tk.Toplevel):
 
         # Center the splash screen on the screen
         self.center_on_screen()
+        
 
     def center_on_screen(self):
         width = self.winfo_reqwidth()
@@ -528,9 +626,48 @@ def show_splash_and_fetch_data(root, listbox):
 
         # Destroy the splash screen and show the main window after 5 seconds
         root.after(5000, lambda: [splash.destroy(), root.deiconify()])
+        # root.after(0, load_data)
     except Exception as e:
         print(e)
 
+def load_data():
+    try:
+        with open('data.json', 'r') as f:
+            data = json.load(f)
+
+        search_var.set(data['search_box_value'])
+        parts_search_var2.set(data['parts_search_box2_value'])
+        listbox_selection = data['listbox_selection']
+        if listbox_selection:
+            index = listbox.get(0, tk.END).index(listbox_selection)
+            listbox.selection_set(index)
+
+        value1.config(text=data['value1'])
+        value2.config(text=data['value2'])
+        value3.config(text=data['value3'])
+
+        # set the Treeview values
+        table2.delete(*table2.get_children())
+        for row in data['table2_values']:
+            table2.insert('', tk.END, values=row)
+
+        root.state('zoomed')
+        
+    except FileNotFoundError:
+        messagebox.showwarning(title='No Data', message='No saved data found.')
+        
+    except Exception as e:
+        messagebox.showerror(title='Error', message='Error loading saved data.')
+        print(f"Error loading saved data: {e}")
+
+
+def on_closing():
+    # stop all running threads
+    for thread in threading.enumerate():
+        if thread.is_alive():
+            thread.stop()
+    # destroy the main window
+    root.destroy()
 
 def toggle_button(button, product_type):
     global selected_button, server_button, ws_button, other_button, background_color
@@ -571,31 +708,70 @@ def on_double_click(event, treeview):
         pyperclip.copy(cell_value)
         print(f'Copied: {cell_value}')          
 
-def view_on_google(table2):
-    selected_item = table2.selection()
-    if selected_item:
-        item_values = table2.item(selected_item, 'values')
-        description = item_values[2]  # Assuming Description is the third value in item_values
-        description = description.replace(' ', '+')
-        url = f"https://www.google.com/search?q={description}&rlz=1C1ONGR_enUS975US975&sxsrf=AJOqlzXfS0bHTN8aZinRzbsZPd9M4O4h2g:1678991274668&source=lnms&tbm=isch&sa=X&ved=2ahUKEwj-oIf0ieH9AhWRkYkEHfQvC6EQ0pQJegQIJRAE&biw=2400&bih=1321&dpr=0.8"
-        webbrowser.open_new_tab(url)
-    else:
-        messagebox.showwarning(title='Warning', message='Please select a row first.')
+def update_max_qty_database(sku: str, max_qty: int):
+    try:
+        connection = mysql.connector.connect(
+            host=mysql_host,
+            port=3306,
+            database=mysql_database,
+            user=mysql_user,
+            password=mysql_password
+        )
+        cursor = connection.cursor()
 
-def view_on_sellercloud(table2):
-    selected_item = table2.selection()
-    if selected_item:
-        item_values = table2.item(selected_item, 'values')
-        sku = item_values[1]  # Assuming SKU is the second value in item_values
-        sku = sku.replace(' ', '+')
-        url = f"https://pcsp.cwa.sellercloud.com/Inventory/Product_Dashboard.aspx?Id={sku}"
-        webbrowser.open_new_tab(url)
-    else:
-        messagebox.showwarning(title='Warning', message='Please select a row first.')
+        # Update the high stock notice value in the database
+        query = "UPDATE sellercloud.AllProducts SET InventoryHighStockNotice = %s WHERE ProductID = %s"
+        cursor.execute(query, (max_qty, sku))
+        connection.commit()
+        
+    except Exception as e:
+        print(f"Error updating max qty for SKU {sku}: {e}")
+        
+    finally:
+        cursor.close()
+        connection.close()
 
-def open_pcsp():
-    url = "https://pcserverandparts.com/"
-    webbrowser.open_new_tab(url)
+def display_max_qty_window(event, table1, table2):
+    selection1 = table1.selection()
+    selection2 = table2.selection()
+    # if selection1 or selection2:
+    #     top = tk.Toplevel()
+    #     top.title("Edit Max Qty")
+    #     top.geometry("1000x400")
+    #     top.resizable(False, False)
+
+    #     # Get selected values from Table1
+    #     table1_values = table1.item(selection1, 'values') if selection1 else None
+
+    #     # Get selected values from Table2
+    #     table2_values = table2.item(selection2, 'values') if selection2 else None
+
+    #     # Display selected values from Table1
+    #     if table1_values:
+    #         frame1 = tk.Frame(top)
+    #         frame1.pack(side=tk.TOP, pady=10)
+    #         label1 = tk.Label(frame1, text=f"{table1_values[1]} - {table1_values[2]}", font=("Helvetica", 14))
+    #         label1.pack(side=tk.LEFT, padx=10)
+    #         entry1 = tk.Entry(frame1, width=10, font=("Helvetica", 14))
+    #         entry1.pack(side=tk.LEFT)
+    #         button1 = tk.Button(frame1, text="Update", font=("Helvetica", 14), command=lambda: asyncio.run(edit_max_qty(table1_values[1], int(entry1.get()))))
+    #         button1.pack(side=tk.LEFT, padx=10)
+    #         update_max_qty_database(table1_values[1], int(entry1.get()))
+
+    #     # Display selected values from Table2
+    #     if table2_values:
+    #         frame2 = tk.Frame(top)
+    #         frame2.pack(side=tk.TOP, pady=10)
+    #         label2 = tk.Label(frame2, text=f"{table2_values[1]} - {table2_values[2]}", font=("Helvetica", 14))
+    #         label2.pack(side=tk.LEFT, padx=10)
+    #         entry2 = tk.Entry(frame2, width=10, font=("Helvetica", 14))
+    #         entry2.pack(side=tk.LEFT)
+    #         button2 = tk.Button(frame2, text="Update", font=("Helvetica", 14), command=lambda: asyncio.run(edit_max_qty(table2_values[1], int(entry2.get()))))
+    #         button2.pack(side=tk.LEFT, padx=10)
+    #         update_max_qty_database(table2_values[1], int(entry2.get()))
+
+    # else:
+    #     messagebox.showwarning(title='Warning', message='Please select a row first.')
     
 def update_button_state(treeview, button):
     if treeview.selection():
@@ -643,6 +819,66 @@ def init_value(value):
     value.pack(side='top')
     value.config(background=background_color, foreground=highlight_color, font=('Arial', 30))
 
+def scroll_listbox(event):
+    if event.keysym == "Up":
+        if not listbox.curselection():
+            listbox.selection_set(0)
+            listbox.activate(0)
+            listbox.yview_scroll(-1, "units")
+        else:
+            index = int(listbox.curselection()[0])
+            if index == 0:
+                return
+            listbox.selection_clear(0, END)
+            listbox.selection_set(index - 1)
+            listbox.activate(index - 1)
+            listbox.yview_scroll(-1, "units")
+    elif event.keysym == "Down":
+        if not listbox.curselection() and listbox.size() > 0:
+            listbox.selection_set(0)
+            listbox.activate(0)
+            listbox.yview_scroll(1, "units")
+        else:
+            index = int(listbox.curselection()[0])
+            if index == listbox.size() - 1:
+                return
+            listbox.selection_clear(0, END)
+            listbox.selection_set(index + 1)
+            listbox.activate(index + 1)
+            listbox.yview_scroll(1, "units")
+
+def scroll_treeview(event):
+    try:
+        if event.keysym == "Up":
+            if not table2.selection():
+                first_item = table2.get_children()[0]
+                table2.focus(first_item)
+                table2.selection_set(first_item)
+                table2.see(first_item)
+            else:
+                cur_item = table2.focus()
+                prev_item = table2.prev(cur_item)
+                if prev_item:
+                    table2.focus(prev_item)
+                    table2.selection_set(prev_item)
+                    table2.see(prev_item)
+        elif event.keysym == "Down":
+            if not table2.selection() and len(table2.get_children()) > 0:
+                first_item = table2.get_children()[0]
+                table2.focus(first_item)
+                table2.selection_set(first_item)
+                table2.see(first_item)
+            else:
+                cur_item = table2.focus()
+                next_item = table2.next(cur_item)
+                if next_item:
+                    table2.focus(next_item)
+                    table2.selection_set(next_item)
+                    table2.see(next_item)
+    except Exception as e:
+        print("No items in table2")
+
+
 
 # create main window
 root = tk.Tk()
@@ -650,6 +886,38 @@ root.geometry("1200x750")
 
 root.title("Harvest Tool")
 root.configure(background=background_color)
+
+# bind key events to increment/decrement quantity
+def on_key(event):
+    print(event.state)  # print the event state code
+    print(event.keysym)  # print the key pressed
+    if event.keysym == "Prior":
+        qty_var.set(str(int(qty_var.get()) + 1))
+    elif event.keysym == "Next":
+        qty_var.set(str(max(int(qty_var.get()) - 1, 1)))
+    # elif event.keysym == "P" and event.state == 4:  # ctrl+p
+    #     print_selected_row(event, table2, menu)
+    elif event.keysym == "P" and event.state == 16:  # alt+p
+        parts_search_box2.focus_set()
+    elif event.keysym == "Tab":
+        if event.widget == search_box:
+            parts_search_box2.focus_set()
+            return "break"
+        else:
+            search_box.focus_set()
+            return "break"
+
+root.bind("<KeyPress>", on_key)
+root.bind("<Control-p>", lambda event: print_selected_row(event, table2, menu, qty_var, initials_entry))
+
+# set window to full screen
+# root.attributes("-fullscreen", True)
+
+# # remove maximize button
+root.state("zoomed")
+
+# add exit button to top bar
+# root.protocol("WM_DELETE_WINDOW", on_closing)
 
 # List of all the original items in the listbox
 original_items = []
@@ -819,11 +1087,11 @@ table_columns = ('Type', 'SKU', 'Description', 'Qty', 'Max Qty')
 parts_search_var = tk.StringVar()
 
 # create search box for the table
-parts_search_box = tk.Entry(table_frame1, textvariable=parts_search_var, borderwidth=10, relief=tk.FLAT)
-parts_search_box.pack(side='right', padx=10, pady=10)
-parts_search_box.config(background='#5c596b', foreground='#ffffff', font=('Arial', 12, 'bold'))
-parts_search_box.bind('<FocusIn>', lambda event: on_search_box_focus_in(event, parts_search_box))
-parts_search_box.bind('<FocusOut>', lambda event: on_search_box_focus_out(event, parts_search_box))
+# parts_search_box = tk.Entry(table_frame1, textvariable=parts_search_var, borderwidth=10, relief=tk.FLAT)
+# parts_search_box.pack(side='right', padx=10, pady=10)
+# parts_search_box.config(background='#5c596b', foreground='#ffffff', font=('Arial', 12, 'bold'))
+# parts_search_box.bind('<FocusIn>', lambda event: on_search_box_focus_in(event, parts_search_box))
+# parts_search_box.bind('<FocusOut>', lambda event: on_search_box_focus_out(event, parts_search_box))
 # parts_search_box.bind('<Return>', lambda event: search_parts(event, listbox, parts_search_box))
 # parts_search_var.trace("w", lambda name, index, mode: search_parts())
 
@@ -849,10 +1117,42 @@ button_bar2.config(background='#2f2d38')
 btn_print = tk.Button(button_bar2, text='Print Selected')
 btn_print.pack(side='left', padx=10, pady=10)
 btn_print.config(background=blue_foreground_color)
-btn_print.bind('<Enter>', lambda event: on_widget_enter)
-btn_print.bind('<Leave>', lambda event: on_widget_leave)
-btn_print.bind('<ButtonRelease-1>', lambda event: print_selected_row(event, table1))
+init_button(btn_print, "", 'left')
+# btn_print.bind('<Enter>', lambda event: on_widget_enter)
+# btn_print.bind('<Leave>', lambda event: on_widget_leave)
+btn_print.bind('<ButtonRelease-1>', lambda event: print_selected_row(event, table2, menu, qty_var, initials_entry))
 
+qty_label = tk.Label(button_bar2, text="Qty:")
+qty_var = tk.StringVar(value="1")
+qty_entry = tk.Entry(button_bar2, textvariable=qty_var, width=5)
+qty_label.pack(side='left')
+qty_entry.pack(side='left')
+qty_label.config(background=background_color, foreground=white_foreground_color, font=('Arial', 12, 'bold'))
+qty_entry.config(background=background_color, foreground=white_foreground_color, font=('Arial', 12, 'bold'))
+
+initials_label = tk.Label(button_bar2, text="Initials:")
+initials_var = tk.StringVar(value="-")
+initials_entry = tk.Entry(button_bar2, textvariable=initials_var, width=5)
+initials_label.config(background=background_color, foreground=white_foreground_color, font=('Arial', 12, 'bold'))
+initials_entry.config(background=background_color, foreground=white_foreground_color, font=('Arial', 12, 'bold'))
+initials_label.pack(side='left')
+initials_entry.pack(side='left')
+
+printers = get_printer_list()
+
+# Create a dropdown list widget
+menu = tk.StringVar()
+menu.set('Select a printer')
+dropdown = tk.OptionMenu(button_bar2, menu, *printers)
+
+# dropdown["menu"].bind(label=printers[2], command=lambda printer_name=printers[2]: print("Selected printer: " + printer_name))
+dropdown.pack(side='left', padx=10, pady=10)
+dropdown.config(background=background_color, foreground=white_foreground_color, font=('Arial', 12, 'bold'), width=25)
+
+
+
+
+    
 btn_view_on_google = tk.Button(button_bar2, text='Google')
 btn_view_on_google.pack(side='right', padx=10, pady=10)
 btn_view_on_google.config(background=highlight_color)
@@ -886,7 +1186,7 @@ btn_edit_max_qty.pack(side='right', padx=10, pady=10)
 btn_edit_max_qty.config(background=blue_foreground_color)
 btn_edit_max_qty.bind('<Enter>', lambda event: on_widget_enter)
 btn_edit_max_qty.bind('<Leave>', lambda event: on_widget_leave)
-btn_edit_max_qty.bind('<ButtonRelease-1>', lambda event: edit_max_qty(event, table1))
+btn_edit_max_qty.bind('<ButtonRelease-1>', lambda event: display_max_qty_window(event, table1, table2))
 
 # init_button(btn_print, "", "right")
 
@@ -908,8 +1208,14 @@ parts_search_var2 = tk.StringVar()
 parts_search_box2 = tk.Entry(table_frame2, textvariable=parts_search_var2, borderwidth=10, relief=tk.FLAT)
 parts_search_box2.pack(side='right', padx=10, pady=10)
 parts_search_box2.config(background='#5c596b', foreground='#ffffff', font=('Arial', 12, 'bold'))
-parts_search_box2.bind('<FocusIn>', lambda event: on_search_box_focus_in(event, parts_search_box))
-parts_search_box2.bind('<FocusOut>', lambda event: on_search_box_focus_out(event, parts_search_box))
+parts_search_box2.bind('<FocusIn>', lambda event: on_search_box_focus_in(event, parts_search_box2))
+parts_search_box2.bind('<FocusOut>', lambda event: on_search_box_focus_out(event, parts_search_box2))
+
+search_box.bind("<Up>", scroll_listbox)
+search_box.bind("<Down>", scroll_listbox)
+parts_search_box2.bind("<Up>", scroll_treeview)
+parts_search_box2.bind("<Down>", scroll_treeview)
+parts_search_box2.bind("<Return>", lambda event: print_selected_row(event, table2, menu, qty_var, initials_entry))
 
 # Call the search_and_update_treeview function every time the parts_search_var2 value changes
 parts_search_var2.trace("w", search_and_update_treeview)
@@ -941,7 +1247,13 @@ table2.bind('<<TreeviewSelect>>', lambda event: update_button_state(table2, btn_
 #     table2.heading(column, text=column)
 # table2.pack(padx=10, pady=10, fill='both', expand=True)
 
-
+# Populate the dropdown list with printer names
 
 show_splash_and_fetch_data(root, listbox)
+
+# load_data()
+
+# save_thread = threading.Thread(target=save_data)
+# save_thread.start()
+
 root.mainloop()

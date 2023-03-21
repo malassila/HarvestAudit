@@ -139,3 +139,485 @@
 2023-03-20 11:07:34 [INFO] Parts results: 6
 2023-03-20 11:22:09 [INFO] Location notes results: 4
 2023-03-20 11:22:09 [INFO] Parts results: 7
+2023-03-20 12:12:23 [INFO] Location notes results: 7
+2023-03-20 12:12:23 [INFO] Parts results: 3
+2023-03-20 12:14:59 [INFO] Location notes results: 3
+2023-03-20 12:14:59 [INFO] Parts results: 4
+2023-03-21 08:39:13 [INFO] Location notes results: 3
+2023-03-21 08:39:13 [INFO] Parts results: 4
+2023-03-21 08:59:38 [INFO] Location notes results: 10
+2023-03-21 08:59:38 [INFO] Parts results: 1
+2023-03-21 10:58:28 [INFO] Location notes results: 1
+2023-03-21 10:58:28 [INFO] Parts results: 9
+2023-03-21 10:58:30 [INFO] Location notes results: 1
+2023-03-21 10:58:30 [INFO] Parts results: 9
+2023-03-21 10:58:31 [INFO] Location notes results: 1
+2023-03-21 10:58:31 [INFO] Parts results: 9
+2023-03-21 10:58:32 [INFO] Location notes results: 1
+2023-03-21 10:58:32 [INFO] Parts results: 9
+2023-03-21 11:33:29 [INFO] Location notes results: 10
+2023-03-21 11:33:29 [INFO] Parts results: 1
+2023-03-21 11:33:32 [INFO] Location notes results: 3
+2023-03-21 11:33:32 [INFO] Parts results: 4
+2023-03-21 11:33:33 [INFO] Location notes results: 10
+2023-03-21 11:33:33 [INFO] Parts results: 4
+2023-03-21 11:38:19 [INFO] Location notes results: 7
+2023-03-21 11:38:19 [INFO] Parts results: 3
+2023-03-21 11:45:22 [INFO] Error: invalid command name ".!frame2.!treeview2"
+2023-03-21 11:45:22 [INFO] Query: SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable) FROM sellercloud.AllProducts AS ap LEFT JOIN sellercloud.BinExport AS be ON ap.ProductID = be.ProductID WHERE ap.ProductType LIKE %s AND ap.ProductName LIKE %s GROUP BY ap.ProductID, ap.ProductType, ap.ProductName;
+2023-03-21 11:45:46 [INFO] Location notes results: 10
+2023-03-21 11:45:46 [INFO] Parts results: 1
+2023-03-21 11:47:09 [INFO] Error: invalid command name ".!frame2.!treeview2"
+2023-03-21 11:47:09 [INFO] Query: SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable) FROM sellercloud.AllProducts AS ap LEFT JOIN sellercloud.BinExport AS be ON ap.ProductID = be.ProductID WHERE ap.ProductType LIKE %s AND ap.ProductName LIKE %s GROUP BY ap.ProductID, ap.ProductType, ap.ProductName;
+2023-03-21 11:50:16 [INFO] Location notes results: 7
+2023-03-21 11:50:16 [INFO] Parts results: 3
+2023-03-21 11:50:17 [INFO] Location notes results: 7
+2023-03-21 11:50:17 [INFO] Parts results: 6
+2023-03-21 11:52:19 [INFO] Location notes results: 10
+2023-03-21 11:52:19 [INFO] Parts results: 1
+2023-03-21 11:52:20 [INFO] Location notes results: 3
+2023-03-21 11:52:20 [INFO] Parts results: 4
+2023-03-21 11:55:10 [INFO] Location notes results: 7
+2023-03-21 11:55:10 [INFO] Parts results: 3
+2023-03-21 11:55:11 [INFO] Location notes results: 1
+2023-03-21 11:55:11 [INFO] Parts results: 0
+2023-03-21 11:55:12 [INFO] Location notes results: 5
+2023-03-21 11:55:12 [INFO] Parts results: 0
+2023-03-21 11:55:12 [INFO] Location notes results: 1
+2023-03-21 11:55:12 [INFO] Parts results: 0
+2023-03-21 11:55:12 [INFO] Location notes results: 1
+2023-03-21 11:55:12 [INFO] Parts results: 0
+2023-03-21 11:55:13 [INFO] Location notes results: 1
+2023-03-21 11:55:13 [INFO] Parts results: 0
+2023-03-21 11:55:13 [INFO] Location notes results: 1
+2023-03-21 11:55:13 [INFO] Parts results: 0
+2023-03-21 11:55:13 [INFO] Location notes results: 1
+2023-03-21 11:55:13 [INFO] Parts results: 0
+2023-03-21 11:55:23 [INFO] Location notes results: 1
+2023-03-21 11:55:23 [INFO] Parts results: 0
+2023-03-21 11:55:23 [INFO] Location notes results: 1
+2023-03-21 11:55:23 [INFO] Parts results: 0
+2023-03-21 11:55:24 [INFO] Location notes results: 30
+2023-03-21 11:55:24 [INFO] Parts results: 0
+2023-03-21 11:55:27 [INFO] Location notes results: 1
+2023-03-21 11:55:27 [INFO] Parts results: 0
+2023-03-21 11:55:27 [INFO] Location notes results: 1
+2023-03-21 11:55:27 [INFO] Parts results: 0
+2023-03-21 11:55:28 [INFO] Location notes results: 1
+2023-03-21 11:55:28 [INFO] Parts results: 0
+2023-03-21 11:55:29 [INFO] Location notes results: 1
+2023-03-21 11:55:29 [INFO] Parts results: 0
+2023-03-21 11:55:32 [INFO] Location notes results: 1
+2023-03-21 11:55:32 [INFO] Parts results: 0
+2023-03-21 11:55:33 [INFO] Location notes results: 1
+2023-03-21 11:55:33 [INFO] Parts results: 0
+2023-03-21 11:55:34 [INFO] Location notes results: 3
+2023-03-21 11:55:34 [INFO] Parts results: 4
+2023-03-21 11:55:35 [INFO] Location notes results: 30
+2023-03-21 11:55:35 [INFO] Parts results: 0
+2023-03-21 11:55:55 [INFO] Location notes results: 1
+2023-03-21 11:56:48 [INFO] Location notes results: 30
+2023-03-21 11:57:17 [INFO] Location notes results: 10
+2023-03-21 11:57:17 [INFO] Parts results: 4
+2023-03-21 11:57:24 [INFO] Location notes results: 30
+2023-03-21 11:57:24 [INFO] Parts results: 0
+2023-03-21 11:58:20 [INFO] Location notes results: 1
+2023-03-21 11:58:20 [INFO] Parts results: 6
+2023-03-21 11:58:34 [INFO] Location notes results: 4
+2023-03-21 11:58:34 [INFO] Parts results: 0
+2023-03-21 11:58:35 [INFO] Location notes results: 4
+2023-03-21 11:58:35 [INFO] Parts results: 0
+2023-03-21 11:58:35 [INFO] Location notes results: 7
+2023-03-21 11:58:35 [INFO] Parts results: 3
+2023-03-21 11:58:59 [INFO] Location notes results: 7
+2023-03-21 11:58:59 [INFO] Parts results: 3
+2023-03-21 11:59:17 [INFO] Location notes results: 7
+2023-03-21 11:59:17 [INFO] Parts results: 3
+2023-03-21 12:01:42 [INFO] Location notes results: 1
+2023-03-21 12:01:42 [INFO] Parts results: 3
+2023-03-21 12:13:13 [INFO] Location notes results: 1
+2023-03-21 12:13:15 [INFO] Location notes results: 1
+2023-03-21 12:13:16 [INFO] Location notes results: 1
+2023-03-21 12:13:16 [INFO] Location notes results: 1
+2023-03-21 12:13:16 [INFO] Location notes results: 1
+2023-03-21 12:13:17 [INFO] Location notes results: 1
+2023-03-21 12:15:23 [INFO] Location notes results: 1
+2023-03-21 12:15:23 [INFO] Parts results: 3
+2023-03-21 12:15:34 [INFO] Location notes results: 1
+2023-03-21 12:15:34 [INFO] Parts results: 0
+2023-03-21 12:15:35 [INFO] Location notes results: 1
+2023-03-21 12:15:35 [INFO] Parts results: 6
+2023-03-21 12:15:37 [INFO] Location notes results: 1
+2023-03-21 12:15:37 [INFO] Parts results: 3
+2023-03-21 12:15:39 [INFO] Location notes results: 1
+2023-03-21 12:15:39 [INFO] Parts results: 6
+2023-03-21 12:15:43 [INFO] Location notes results: 1
+2023-03-21 12:15:43 [INFO] Parts results: 0
+2023-03-21 12:15:43 [INFO] Location notes results: 1
+2023-03-21 12:15:43 [INFO] Parts results: 0
+2023-03-21 12:15:44 [INFO] Location notes results: 1
+2023-03-21 12:15:44 [INFO] Parts results: 0
+2023-03-21 12:15:45 [INFO] Location notes results: 1
+2023-03-21 12:15:45 [INFO] Parts results: 0
+2023-03-21 12:15:45 [INFO] Location notes results: 1
+2023-03-21 12:15:45 [INFO] Parts results: 0
+2023-03-21 12:15:50 [INFO] Location notes results: 1
+2023-03-21 12:15:50 [INFO] Parts results: 0
+2023-03-21 12:15:52 [INFO] Location notes results: 1
+2023-03-21 12:15:52 [INFO] Parts results: 0
+2023-03-21 12:15:53 [INFO] Location notes results: 1
+2023-03-21 12:15:53 [INFO] Parts results: 0
+2023-03-21 12:15:54 [INFO] Location notes results: 1
+2023-03-21 12:15:54 [INFO] Parts results: 0
+2023-03-21 12:15:55 [INFO] Location notes results: 1
+2023-03-21 12:15:55 [INFO] Parts results: 0
+2023-03-21 12:15:57 [INFO] Location notes results: 1
+2023-03-21 12:15:57 [INFO] Parts results: 0
+2023-03-21 12:15:58 [INFO] Location notes results: 1
+2023-03-21 12:15:58 [INFO] Parts results: 0
+2023-03-21 12:16:00 [INFO] Location notes results: 1
+2023-03-21 12:16:00 [INFO] Parts results: 0
+2023-03-21 12:16:01 [INFO] Location notes results: 1
+2023-03-21 12:16:01 [INFO] Parts results: 0
+2023-03-21 12:16:06 [INFO] Location notes results: 1
+2023-03-21 12:16:06 [INFO] Parts results: 0
+2023-03-21 12:16:06 [INFO] Location notes results: 1
+2023-03-21 12:16:06 [INFO] Parts results: 4
+2023-03-21 12:16:10 [INFO] Location notes results: 1
+2023-03-21 12:16:10 [INFO] Parts results: 0
+2023-03-21 12:16:11 [INFO] Location notes results: 1
+2023-03-21 12:16:11 [INFO] Parts results: 0
+2023-03-21 12:16:14 [INFO] Location notes results: 1
+2023-03-21 12:16:15 [INFO] Parts results: 8
+2023-03-21 12:21:32 [INFO] Location notes results: 1
+2023-03-21 12:21:32 [INFO] Parts results: 6
+2023-03-21 12:21:38 [INFO] Location notes results: 1
+2023-03-21 12:21:38 [INFO] Parts results: 6
+2023-03-21 12:21:40 [INFO] Location notes results: 1
+2023-03-21 12:21:40 [INFO] Parts results: 3
+2023-03-21 12:21:42 [INFO] Location notes results: 1
+2023-03-21 12:21:42 [INFO] Parts results: 3
+2023-03-21 12:21:43 [INFO] Location notes results: 1
+2023-03-21 12:21:43 [INFO] Parts results: 0
+2023-03-21 12:24:20 [INFO] Location notes results: 1
+2023-03-21 12:24:21 [INFO] Parts results: 5
+2023-03-21 12:24:23 [INFO] Location notes results: 1
+2023-03-21 12:24:23 [INFO] Parts results: 0
+2023-03-21 12:24:24 [INFO] Location notes results: 1
+2023-03-21 12:24:24 [INFO] Parts results: 0
+2023-03-21 12:24:25 [INFO] Location notes results: 1
+2023-03-21 12:24:25 [INFO] Parts results: 3
+2023-03-21 12:27:42 [INFO] Location notes results: 1
+2023-03-21 12:27:42 [INFO] Parts results: 5
+2023-03-21 12:27:44 [INFO] Location notes results: 1
+2023-03-21 12:27:44 [INFO] Parts results: 0
+2023-03-21 12:27:45 [INFO] Location notes results: 1
+2023-03-21 12:27:45 [INFO] Parts results: 3
+2023-03-21 12:27:46 [INFO] Location notes results: 1
+2023-03-21 12:27:46 [INFO] Parts results: 0
+2023-03-21 12:27:47 [INFO] Location notes results: 1
+2023-03-21 12:27:47 [INFO] Parts results: 3
+2023-03-21 12:27:48 [INFO] Location notes results: 1
+2023-03-21 12:27:48 [INFO] Parts results: 6
+2023-03-21 12:27:49 [INFO] Location notes results: 1
+2023-03-21 12:27:49 [INFO] Parts results: 6
+2023-03-21 12:27:50 [INFO] Location notes results: 1
+2023-03-21 12:27:50 [INFO] Parts results: 0
+2023-03-21 12:27:50 [INFO] Location notes results: 1
+2023-03-21 12:27:50 [INFO] Parts results: 0
+2023-03-21 12:27:51 [INFO] Location notes results: 1
+2023-03-21 12:27:51 [INFO] Parts results: 0
+2023-03-21 12:27:51 [INFO] Location notes results: 1
+2023-03-21 12:27:51 [INFO] Parts results: 0
+2023-03-21 12:27:52 [INFO] Location notes results: 1
+2023-03-21 12:27:52 [INFO] Parts results: 10
+2023-03-21 12:27:57 [INFO] Location notes results: 1
+2023-03-21 12:27:57 [INFO] Parts results: 0
+2023-03-21 12:27:57 [INFO] Location notes results: 1
+2023-03-21 12:27:58 [INFO] Parts results: 2
+2023-03-21 12:27:58 [INFO] Location notes results: 1
+2023-03-21 12:27:58 [INFO] Parts results: 5
+2023-03-21 12:28:00 [INFO] Location notes results: 1
+2023-03-21 12:28:00 [INFO] Parts results: 0
+2023-03-21 12:28:00 [INFO] Location notes results: 1
+2023-03-21 12:28:00 [INFO] Parts results: 3
+2023-03-21 12:28:02 [INFO] Location notes results: 1
+2023-03-21 12:28:02 [INFO] Parts results: 0
+2023-03-21 12:28:02 [INFO] Location notes results: 1
+2023-03-21 12:28:03 [INFO] Parts results: 6
+2023-03-21 12:28:04 [INFO] Location notes results: 1
+2023-03-21 12:28:04 [INFO] Parts results: 3
+2023-03-21 12:28:05 [INFO] Location notes results: 1
+2023-03-21 12:28:05 [INFO] Parts results: 6
+2023-03-21 12:28:06 [INFO] Location notes results: 1
+2023-03-21 12:28:06 [INFO] Parts results: 0
+2023-03-21 12:28:06 [INFO] Location notes results: 1
+2023-03-21 12:28:06 [INFO] Parts results: 2
+2023-03-21 12:28:07 [INFO] Location notes results: 1
+2023-03-21 12:28:07 [INFO] Parts results: 0
+2023-03-21 12:30:27 [INFO] Location notes results: 1
+2023-03-21 12:30:27 [INFO] Parts results: 5
+2023-03-21 12:30:29 [INFO] Location notes results: 1
+2023-03-21 12:30:29 [INFO] Parts results: 0
+2023-03-21 12:30:30 [INFO] Location notes results: 1
+2023-03-21 12:30:30 [INFO] Parts results: 3
+2023-03-21 12:30:51 [INFO] Location notes results: 1
+2023-03-21 12:30:51 [INFO] Parts results: 5
+2023-03-21 12:30:52 [INFO] Location notes results: 1
+2023-03-21 12:30:52 [INFO] Parts results: 0
+2023-03-21 12:30:52 [INFO] Location notes results: 1
+2023-03-21 12:30:52 [INFO] Parts results: 3
+2023-03-21 12:31:14 [INFO] Location notes results: 1
+2023-03-21 12:31:14 [INFO] Parts results: 5
+2023-03-21 12:31:15 [INFO] Location notes results: 1
+2023-03-21 12:31:15 [INFO] Parts results: 0
+2023-03-21 12:31:16 [INFO] Location notes results: 1
+2023-03-21 12:31:16 [INFO] Parts results: 3
+2023-03-21 12:31:16 [INFO] Location notes results: 1
+2023-03-21 12:31:16 [INFO] Parts results: 0
+2023-03-21 12:31:17 [INFO] Location notes results: 1
+2023-03-21 12:31:17 [INFO] Parts results: 6
+2023-03-21 12:31:18 [INFO] Location notes results: 1
+2023-03-21 12:31:18 [INFO] Parts results: 3
+2023-03-21 12:31:19 [INFO] Location notes results: 1
+2023-03-21 12:31:19 [INFO] Parts results: 0
+2023-03-21 12:31:20 [INFO] Location notes results: 1
+2023-03-21 12:31:20 [INFO] Parts results: 0
+2023-03-21 12:31:21 [INFO] Location notes results: 1
+2023-03-21 12:31:21 [INFO] Parts results: 0
+2023-03-21 12:31:21 [INFO] Location notes results: 1
+2023-03-21 12:31:22 [INFO] Parts results: 2
+2023-03-21 12:31:22 [INFO] Location notes results: 1
+2023-03-21 12:31:22 [INFO] Parts results: 4
+2023-03-21 12:31:23 [INFO] Location notes results: 1
+2023-03-21 12:31:23 [INFO] Parts results: 5
+2023-03-21 12:31:23 [INFO] Location notes results: 1
+2023-03-21 12:31:23 [INFO] Parts results: 0
+2023-03-21 12:31:27 [INFO] Location notes results: 1
+2023-03-21 12:31:27 [INFO] Parts results: 0
+2023-03-21 12:31:27 [INFO] Location notes results: 1
+2023-03-21 12:31:27 [INFO] Parts results: 0
+2023-03-21 12:31:28 [INFO] Location notes results: 1
+2023-03-21 12:31:28 [INFO] Parts results: 0
+2023-03-21 12:31:28 [INFO] Location notes results: 1
+2023-03-21 12:31:28 [INFO] Parts results: 0
+2023-03-21 12:31:29 [INFO] Location notes results: 1
+2023-03-21 12:31:29 [INFO] Parts results: 0
+2023-03-21 12:31:30 [INFO] Location notes results: 1
+2023-03-21 12:31:30 [INFO] Parts results: 0
+2023-03-21 12:31:31 [INFO] Location notes results: 1
+2023-03-21 12:31:31 [INFO] Parts results: 0
+2023-03-21 12:31:32 [INFO] Location notes results: 1
+2023-03-21 12:31:32 [INFO] Parts results: 0
+2023-03-21 12:31:33 [INFO] Location notes results: 1
+2023-03-21 12:31:33 [INFO] Parts results: 8
+2023-03-21 12:31:38 [INFO] Location notes results: 1
+2023-03-21 12:31:38 [INFO] Parts results: 4
+2023-03-21 12:31:40 [INFO] Location notes results: 1
+2023-03-21 12:31:40 [INFO] Parts results: 3
+2023-03-21 12:31:40 [INFO] Location notes results: 1
+2023-03-21 12:31:40 [INFO] Parts results: 10
+2023-03-21 12:31:41 [INFO] Location notes results: 1
+2023-03-21 12:31:41 [INFO] Parts results: 0
+2023-03-21 12:31:42 [INFO] Location notes results: 1
+2023-03-21 12:31:42 [INFO] Parts results: 2
+2023-03-21 12:31:42 [INFO] Location notes results: 1
+2023-03-21 12:31:42 [INFO] Parts results: 0
+2023-03-21 12:31:43 [INFO] Location notes results: 1
+2023-03-21 12:31:43 [INFO] Parts results: 0
+2023-03-21 12:31:44 [INFO] Location notes results: 1
+2023-03-21 12:31:44 [INFO] Parts results: 11
+2023-03-21 12:31:49 [INFO] Location notes results: 1
+2023-03-21 12:31:49 [INFO] Parts results: 5
+2023-03-21 12:32:12 [INFO] Location notes results: 1
+2023-03-21 12:32:12 [INFO] Parts results: 4
+2023-03-21 12:33:55 [INFO] Location notes results: 1
+2023-03-21 12:33:55 [INFO] Parts results: 5
+2023-03-21 12:33:56 [INFO] Location notes results: 1
+2023-03-21 12:33:56 [INFO] Parts results: 0
+2023-03-21 12:33:57 [INFO] Location notes results: 1
+2023-03-21 12:33:57 [INFO] Parts results: 3
+2023-03-21 12:33:58 [INFO] Location notes results: 1
+2023-03-21 12:33:58 [INFO] Parts results: 0
+2023-03-21 12:33:58 [INFO] Location notes results: 1
+2023-03-21 12:33:59 [INFO] Parts results: 6
+2023-03-21 12:34:00 [INFO] Location notes results: 1
+2023-03-21 12:34:00 [INFO] Parts results: 3
+2023-03-21 12:34:01 [INFO] Location notes results: 1
+2023-03-21 12:34:01 [INFO] Parts results: 0
+2023-03-21 12:34:02 [INFO] Location notes results: 1
+2023-03-21 12:34:02 [INFO] Parts results: 3
+2023-03-21 12:34:03 [INFO] Location notes results: 1
+2023-03-21 12:34:04 [INFO] Parts results: 5
+2023-03-21 12:34:04 [INFO] Location notes results: 1
+2023-03-21 12:34:04 [INFO] Parts results: 0
+2023-03-21 12:34:05 [INFO] Location notes results: 1
+2023-03-21 12:34:05 [INFO] Parts results: 2
+2023-03-21 12:34:06 [INFO] Location notes results: 1
+2023-03-21 12:34:06 [INFO] Parts results: 0
+2023-03-21 12:34:12 [INFO] Location notes results: 1
+2023-03-21 12:34:12 [INFO] Parts results: 4
+2023-03-21 12:34:13 [INFO] Location notes results: 1
+2023-03-21 12:34:13 [INFO] Parts results: 3
+2023-03-21 12:34:58 [INFO] Location notes results: 1
+2023-03-21 12:34:58 [INFO] Parts results: 0
+2023-03-21 12:34:59 [INFO] Location notes results: 1
+2023-03-21 12:34:59 [INFO] Parts results: 3
+2023-03-21 12:34:59 [INFO] Location notes results: 1
+2023-03-21 12:35:00 [INFO] Parts results: 5
+2023-03-21 12:35:00 [INFO] Location notes results: 1
+2023-03-21 12:35:00 [INFO] Parts results: 2
+2023-03-21 12:35:01 [INFO] Location notes results: 1
+2023-03-21 12:35:01 [INFO] Parts results: 0
+2023-03-21 12:35:49 [INFO] Location notes results: 1
+2023-03-21 12:35:49 [INFO] Parts results: 0
+2023-03-21 12:35:49 [INFO] Location notes results: 1
+2023-03-21 12:35:49 [INFO] Parts results: 5
+2023-03-21 12:38:01 [INFO] Location notes results: 1
+2023-03-21 12:38:01 [INFO] Parts results: 5
+2023-03-21 12:38:04 [INFO] Location notes results: 1
+2023-03-21 12:38:04 [INFO] Parts results: 0
+2023-03-21 12:38:05 [INFO] Location notes results: 1
+2023-03-21 12:38:06 [INFO] Parts results: 3
+2023-03-21 12:38:06 [INFO] Location notes results: 1
+2023-03-21 12:38:07 [INFO] Parts results: 5
+2023-03-21 12:38:08 [INFO] Location notes results: 1
+2023-03-21 12:38:08 [INFO] Parts results: 4
+2023-03-21 12:38:42 [INFO] Location notes results: 1
+2023-03-21 12:38:42 [INFO] Parts results: 4
+2023-03-21 12:38:44 [INFO] Location notes results: 1
+2023-03-21 12:38:44 [INFO] Parts results: 2
+2023-03-21 12:38:45 [INFO] Location notes results: 1
+2023-03-21 12:38:45 [INFO] Parts results: 0
+2023-03-21 12:38:45 [INFO] Location notes results: 1
+2023-03-21 12:38:45 [INFO] Parts results: 0
+2023-03-21 12:38:46 [INFO] Location notes results: 1
+2023-03-21 12:38:46 [INFO] Parts results: 3
+2023-03-21 12:38:47 [INFO] Location notes results: 1
+2023-03-21 12:38:47 [INFO] Parts results: 6
+2023-03-21 12:38:49 [INFO] Location notes results: 1
+2023-03-21 12:38:49 [INFO] Parts results: 3
+2023-03-21 12:39:44 [INFO] Location notes results: 1
+2023-03-21 12:39:44 [INFO] Parts results: 5
+2023-03-21 12:39:45 [INFO] Location notes results: 1
+2023-03-21 12:39:45 [INFO] Parts results: 0
+2023-03-21 12:39:45 [INFO] Location notes results: 1
+2023-03-21 12:39:45 [INFO] Parts results: 0
+2023-03-21 12:39:46 [INFO] Location notes results: 1
+2023-03-21 12:39:46 [INFO] Parts results: 6
+2023-03-21 12:39:47 [INFO] Location notes results: 1
+2023-03-21 12:39:47 [INFO] Parts results: 3
+2023-03-21 12:39:48 [INFO] Location notes results: 1
+2023-03-21 12:39:48 [INFO] Parts results: 5
+2023-03-21 12:39:49 [INFO] Location notes results: 1
+2023-03-21 12:39:49 [INFO] Parts results: 0
+2023-03-21 12:41:23 [INFO] Location notes results: 1
+2023-03-21 12:41:23 [INFO] Parts results: 0
+2023-03-21 12:41:24 [INFO] Location notes results: 1
+2023-03-21 12:41:24 [INFO] Parts results: 3
+2023-03-21 12:41:25 [INFO] Location notes results: 1
+2023-03-21 12:41:25 [INFO] Parts results: 0
+2023-03-21 12:41:26 [INFO] Location notes results: 1
+2023-03-21 12:41:26 [INFO] Parts results: 4
+2023-03-21 12:41:27 [INFO] Location notes results: 1
+2023-03-21 12:41:27 [INFO] Parts results: 2
+2023-03-21 12:41:28 [INFO] Location notes results: 1
+2023-03-21 12:41:28 [INFO] Parts results: 0
+2023-03-21 12:41:29 [INFO] Location notes results: 1
+2023-03-21 12:41:29 [INFO] Parts results: 4
+2023-03-21 12:41:29 [INFO] Location notes results: 1
+2023-03-21 12:41:29 [INFO] Parts results: 3
+2023-03-21 12:41:30 [INFO] Location notes results: 1
+2023-03-21 12:41:30 [INFO] Parts results: 6
+2023-03-21 12:41:31 [INFO] Location notes results: 1
+2023-03-21 12:41:31 [INFO] Parts results: 3
+2023-03-21 12:41:32 [INFO] Location notes results: 1
+2023-03-21 12:41:32 [INFO] Parts results: 6
+2023-03-21 12:41:32 [INFO] Location notes results: 1
+2023-03-21 12:41:32 [INFO] Parts results: 0
+2023-03-21 12:41:33 [INFO] Location notes results: 1
+2023-03-21 12:41:33 [INFO] Parts results: 0
+2023-03-21 12:41:34 [INFO] Location notes results: 1
+2023-03-21 12:41:34 [INFO] Parts results: 2
+2023-03-21 12:41:34 [INFO] Location notes results: 1
+2023-03-21 12:41:34 [INFO] Parts results: 0
+2023-03-21 12:41:39 [INFO] Location notes results: 1
+2023-03-21 12:41:39 [INFO] Parts results: 0
+2023-03-21 12:41:40 [INFO] Location notes results: 1
+2023-03-21 12:41:41 [INFO] Parts results: 0
+2023-03-21 12:41:41 [INFO] Location notes results: 1
+2023-03-21 12:41:41 [INFO] Parts results: 0
+2023-03-21 12:41:42 [INFO] Location notes results: 1
+2023-03-21 12:41:42 [INFO] Parts results: 0
+2023-03-21 12:41:42 [INFO] Location notes results: 1
+2023-03-21 12:41:42 [INFO] Parts results: 0
+2023-03-21 12:41:43 [INFO] Location notes results: 1
+2023-03-21 12:41:43 [INFO] Parts results: 0
+2023-03-21 12:41:43 [INFO] Location notes results: 1
+2023-03-21 12:41:43 [INFO] Parts results: 0
+2023-03-21 12:41:46 [INFO] Location notes results: 1
+2023-03-21 12:41:46 [INFO] Parts results: 4
+2023-03-21 12:41:48 [INFO] Location notes results: 1
+2023-03-21 12:41:48 [INFO] Parts results: 3
+2023-03-21 12:41:49 [INFO] Location notes results: 1
+2023-03-21 12:41:49 [INFO] Parts results: 4
+2023-03-21 12:41:49 [INFO] Location notes results: 1
+2023-03-21 12:41:50 [INFO] Parts results: 3
+2023-03-21 12:41:54 [INFO] Location notes results: 1
+2023-03-21 12:41:54 [INFO] Parts results: 8
+2023-03-21 12:42:01 [INFO] Location notes results: 1
+2023-03-21 12:42:01 [INFO] Parts results: 5
+2023-03-21 12:47:01 [INFO] Error: tuple index out of range
+2023-03-21 12:47:01 [INFO] Query: SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable) FROM sellercloud.AllProducts AS ap LEFT JOIN sellercloud.BinExport AS be ON ap.ProductID = be.ProductID WHERE ap.ProductType LIKE %s AND ap.ProductName LIKE %s GROUP BY ap.ProductID, ap.ProductType, ap.ProductName;
+2023-03-21 12:47:01 [INFO] Error: tuple index out of range
+2023-03-21 12:47:01 [INFO] Query: SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable) FROM sellercloud.AllProducts AS ap LEFT JOIN sellercloud.BinExport AS be ON ap.ProductID = be.ProductID WHERE ap.ProductType LIKE %s AND ap.ProductName LIKE %s GROUP BY ap.ProductID, ap.ProductType, ap.ProductName;
+2023-03-21 12:47:36 [INFO] Location notes results: 1
+2023-03-21 12:47:36 [INFO] Parts results: 6
+2023-03-21 12:47:38 [INFO] Location notes results: 1
+2023-03-21 12:47:38 [INFO] Parts results: 0
+2023-03-21 12:47:38 [INFO] Location notes results: 1
+2023-03-21 12:47:38 [INFO] Parts results: 5
+2023-03-21 12:47:53 [INFO] Error: tuple index out of range
+2023-03-21 12:47:53 [INFO] Query: SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable) FROM sellercloud.AllProducts AS ap LEFT JOIN sellercloud.BinExport AS be ON ap.ProductID = be.ProductID WHERE ap.ProductType LIKE %s AND ap.ProductName LIKE %s GROUP BY ap.ProductID, ap.ProductType, ap.ProductName;
+2023-03-21 12:47:54 [INFO] Error: tuple index out of range
+2023-03-21 12:47:54 [INFO] Query: SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable) FROM sellercloud.AllProducts AS ap LEFT JOIN sellercloud.BinExport AS be ON ap.ProductID = be.ProductID WHERE ap.ProductType LIKE %s AND ap.ProductName LIKE %s GROUP BY ap.ProductID, ap.ProductType, ap.ProductName;
+2023-03-21 13:17:55 [INFO] Location notes results: 1
+2023-03-21 13:17:55 [INFO] Parts results: 0
+2023-03-21 13:17:57 [INFO] Location notes results: 1
+2023-03-21 13:17:57 [INFO] Parts results: 3
+2023-03-21 13:23:10 [INFO] Location notes results: 1
+2023-03-21 13:23:10 [INFO] Parts results: 3
+2023-03-21 13:31:39 [INFO] Location notes results: 1
+2023-03-21 13:31:39 [INFO] Parts results: 0
+2023-03-21 13:31:40 [INFO] Location notes results: 1
+2023-03-21 13:31:40 [INFO] Parts results: 2
+2023-03-21 13:31:43 [INFO] Location notes results: 1
+2023-03-21 13:31:43 [INFO] Parts results: 0
+2023-03-21 13:31:44 [INFO] Location notes results: 1
+2023-03-21 13:31:44 [INFO] Parts results: 0
+2023-03-21 13:31:44 [INFO] Location notes results: 1
+2023-03-21 13:31:44 [INFO] Parts results: 0
+2023-03-21 13:31:45 [INFO] Location notes results: 1
+2023-03-21 13:31:45 [INFO] Parts results: 0
+2023-03-21 13:31:45 [INFO] Location notes results: 1
+2023-03-21 13:31:45 [INFO] Parts results: 0
+2023-03-21 13:31:46 [INFO] Location notes results: 1
+2023-03-21 13:31:46 [INFO] Parts results: 0
+2023-03-21 13:31:47 [INFO] Location notes results: 1
+2023-03-21 13:31:47 [INFO] Parts results: 0
+2023-03-21 13:31:47 [INFO] Location notes results: 1
+2023-03-21 13:31:47 [INFO] Parts results: 0
+2023-03-21 13:31:48 [INFO] Location notes results: 1
+2023-03-21 13:31:48 [INFO] Parts results: 0
+2023-03-21 13:31:49 [INFO] Location notes results: 1
+2023-03-21 13:31:49 [INFO] Parts results: 10
+2023-03-21 13:31:49 [INFO] Location notes results: 1
+2023-03-21 13:31:49 [INFO] Parts results: 0
+2023-03-21 13:31:49 [INFO] Location notes results: 1
+2023-03-21 13:31:49 [INFO] Parts results: 6
+2023-03-21 13:31:49 [INFO] Location notes results: 1
+2023-03-21 13:31:49 [INFO] Parts results: 0
+2023-03-21 13:31:50 [INFO] Location notes results: 1
+2023-03-21 13:31:50 [INFO] Parts results: 5
+2023-03-21 13:35:22 [INFO] Location notes results: 1
+2023-03-21 13:35:22 [INFO] Parts results: 3

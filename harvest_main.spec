@@ -8,7 +8,7 @@ a = Analysis(
     ['harvest_main.py'],
     pathex=[],
     binaries=[],
-    datas=[('images', 'images'), ('labels', 'labels')],
+    datas=[('images', 'images'), ('labels', 'labels'), ('data', 'data')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

@@ -1,17 +1,43 @@
 from jinja2 import Template
+from win32com.client import Dispatch
 
-
-def print_3x1_label(sku, description, qr_code_url):
-    # Load the HTML template from a file
-    with open("template.html", "r") as f:
-        template_str = f.read()
-
-    # Create a Jinja2 template object
-    template = Template(template_str)
-
-    # Render the template with the dynamic content
-    html = template.render(sku=sku, description=description, qr_code_url=qr_code_url)
-
-    # Print the rendered HTML for testing
-    print(html)
+def print_dymo_label(printer_name, qty, sku, description, initials):
+    dymo_printer = Dispatch("Dymo.DymoAddIn")
+    dymo_printer.SelectPrinter(printer_name)
+    dymo_printer.Open("C:\\HarvestAudit\\labels\\3x1.label")
     
+    printer_label = Dispatch("Dymo.DymoLabels")
+    
+    print(printer_label.GetObjectNames(False))
+    
+    printer_label.SetField("SKU", sku)
+    formatted_description = format_description(description)
+    printer_label.SetField("Description", formatted_description)
+    printer_label.SetField("QR", sku)
+    printer_label.SetField("Initials", initials)
+
+    dymo_printer.SetGraphicsAndBarcodePrintMode(False)
+    
+    dymo_printer.StartPrintJob()
+    dymo_printer.Print(qty, False)
+
+    dymo_printer.EndPrintJob()
+    
+def format_description(description):
+    description = description.split()
+    new_description = ""
+    line_len = 0
+    
+    for word in description:
+        word_len = len(word)
+        if line_len + word_len + 1 > 30:
+            new_description += "\n"
+            line_len = 0
+        else:
+            if new_description != "":
+                new_description += " "
+            line_len += 1
+        new_description += word
+        line_len += word_len
+        
+    return new_description
