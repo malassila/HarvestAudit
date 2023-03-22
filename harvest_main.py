@@ -22,12 +22,15 @@ from PIL import Image, ImageTk
 from jinja2 import Template
 import pdfkit
 from tempfile import NamedTemporaryFile
-from effects import on_enter, on_leave, on_search_box_focus_in, on_search_box_focus_out, on_widget_enter, on_widget_leave
-from browser import edit_max_qty, open_pcsp, view_on_google, view_on_sellercloud
-from database import get_connection, query_database
+from effects import *
+from browser import *
+from database import *
+from ui_toggle import *
+from icons import *
 from print import print_dymo_label
 
 # initialize the global variables
+selected_table = None
 selected_button = None
 server_button = None
 ws_button = None
@@ -167,7 +170,7 @@ def fetch_and_update_labels(event, listbox, value1, value2, table1):
         cursor.execute(query, (selected_item, selected_item))
         results = cursor.fetchall()
         
-        print(results)
+        # print(results)
         
         count = len(results)
         
@@ -177,9 +180,27 @@ def fetch_and_update_labels(event, listbox, value1, value2, table1):
         for row in table1.get_children():
             table1.delete(row)
         
-
+        # Create a dictionary to store the unique part types and their descriptions
+        unique_type = {}
+        
         # Add the fetched parts to table1
         for result in results:
+            type = result[0].lower().replace('parts - ', '')
+            keywords = {"motherboard", "psu", "power supply", "heatsink", "backplane", "control panel"}
+            
+            if type in ['part', 'parts']:
+                # print("UNIQUE", unique_type)
+                for keyword in keywords:
+                    # print("KEYWORD: ", keyword)
+                    if keyword in result[2].lower():
+                        unique_type[keyword] = result[2]
+                        break
+                # print("part")
+            else:
+                if type not in unique_type:
+                    unique_type[type] = result[2]
+            # if result[1] not in unique_type:
+
             if result[4] is not None:
                 high_stock_notice = str(result[4])
                 if high_stock_notice == "nan":
@@ -190,17 +211,99 @@ def fetch_and_update_labels(event, listbox, value1, value2, table1):
             else:
                 high_stock_notice = "-"
             table1.insert('', 'end', values=(result[0], result[1], result[2], result[3], high_stock_notice))
-
-        
+        print("__________________________")
+        hide_icons()
+        for part in unique_type:
+            # add_icon(part, icon_frame)
+            show_icon(part)
+            icon_frame.update()
+            
         # get the number of parts in the table
         count = len(table1.get_children())
-        
+        print("COUNT: ", count)
         value3.config(text=count)
 
     finally:
         cursor.close()
         connection.close()
 
+# Unhide a canvas based on the name of the icon
+def show_icon(icon_name):
+    for i, icon_canvas in enumerate(icon_canvas_list):
+        if icon_canvas.icon_name == icon_name:
+            icon_canvas.create_image(0, 0, anchor=tk.NW, image=icon_photo_list[i]) 
+            
+def create_icons(icon_frame):
+    for name in icon_names:
+        path = icon_path
+        if name == 'motherboard':
+            path += "motherboard.png"
+        elif name == 'power supply':
+            path += "power-supply.png"
+        elif name == 'heatsink':
+            path += "heatsink.png"
+        elif name == 'fan':
+            path += "cooling-fan.png"
+        elif name == 'case component':
+            path += "component.png"
+        elif name == 'backplane':
+            path += "backplane.png"
+        icon = Image.open(path)
+        icon = icon.resize((50, 50), Image.ANTIALIAS)
+        icon_image = ImageTk.PhotoImage(icon)
+        canvas = tk.Canvas(icon_frame, width=50, height=50, bg='#26242f', highlightthickness=0)
+        canvas.create_image(0, 0, anchor=tk.NW, image=icon_image)
+        canvas.pack(side='left')
+        canvas.icon_name = name
+        icon_photo_list.append(icon_image)
+        icon_canvas_list.append(canvas)
+
+# Define function to show icons
+def show_icons():
+    for icon_canvas in icon_canvas_list:
+        icon_canvas.pack()
+
+# Define function to hide icons
+def hide_icons():
+    for icon_canvas in icon_canvas_list:
+        icon_canvas.pack_forget()
+         
+class MyApp(tk.Frame):
+    def __init__(self, master=None):
+        super().__init__(master)
+        self.icon = None
+        # ... rest of your code ...
+
+    def add_icon(self, type, icon_frame):
+        try:
+            print(f"Adding icon for {type}")
+            icon_path = "C:\\HarvestAudit\\images\\icon\\"
+            if type == 'motherboard':
+                icon_path += "motherboard.png"
+            elif type == 'power supply':
+                icon_path += "power-supply.png"
+            elif type == 'heatsink':
+                icon_path += "heatsink.png"
+            elif type == 'fan':
+                icon_path += "cooling-fan.png"
+            elif type == 'case component':
+                icon_path += "component.png"
+            elif type == 'backplane':
+                icon_path += "backplane.png"
+            print(f"Icon path: {icon_path}")
+
+            icon = Image.open(icon_path)
+            icon = icon.resize((50, 50), Image.ANTIALIAS)
+
+            self.icon = ImageTk.PhotoImage(icon)
+
+            # Create a canvas for the image
+            canvas = tk.Canvas(icon_frame, width=50, height=50, bg='#26242f', highlightthickness=0)
+            canvas.pack(side='left')
+            canvas.create_image(0, 0, anchor=tk.NW, image=self.icon)
+        except Exception as e:
+            print("Error adding icon: " + str(e))
+            
 def search_and_update_treeview(*args):
     search_keyword = parts_search_var2.get().lower()
     # only search if the search keyword is at least 2 characters long
@@ -340,9 +443,11 @@ def add_to_harvestable(event, table2, table1, value1):
         return
     
     if value1.cget('text') != '-':
-        selected_items = table2.selection()
+        selected_items = list(table2.selection())
+        selected_items.append(combo_box.get())
+        selected_items = tuple(selected_items)
         if selected_items == ():
-            flash_color('red', 500)
+            # flash_color('red', 500)
             messagebox.showwarning(title='Warning', message='What am I adding exactly? Select an item first')
             return
         
@@ -360,7 +465,14 @@ def add_to_harvestable(event, table2, table1, value1):
             cursor = connection.cursor()
 
             for item in selected_items:
-                item_values = table2.item(item, 'values')
+                if isinstance(item, str):
+                    item_values = (item,)
+                    is_combo_box = True
+                    print("Item is a string", item)
+                    print("Item values", item_values)
+                else:
+                    item_values = table2.item(item, 'values')
+                    is_combo_box = False
 
                 # Check for duplicates in table1
                 duplicate = False
@@ -369,21 +481,31 @@ def add_to_harvestable(event, table2, table1, value1):
                     if item_values == existing_values:
                         duplicate = True
                         break
+                    if is_combo_box and item == existing_values[1]:
+                        # Check if a row with same PartProductID exists when adding a CASE COMPONENT from combo box
+                        print("Duplicate found", item, existing_values[1])
+                        duplicate = True
+                        break
+
+
 
                 # Insert the item into the database and table1 if it's not a duplicate
                 if not duplicate:
                     chassis_purchase_group = value1.cget('text')
-                    part_product_id = item_values[1]  # Assuming SKU is the second value in item_values
-
-                    insert_query = "INSERT INTO sellercloud.harvest_parts (ChassisPurchaseGroup, PartProductID) VALUES (%s, %s)"
-                    cursor.execute(insert_query, (chassis_purchase_group, part_product_id))
-                    connection.commit()
+                    if is_combo_box:
+                        part_product_id = combo_box.get()                     
+                        insert_query = "INSERT INTO sellercloud.harvest_parts (ChassisPurchaseGroup, PartProductID) VALUES (%s, %s)"
+                        cursor.execute(insert_query, (chassis_purchase_group, part_product_id))
+                        connection.commit()
+                        item_values = ('CASE COMPONENT',part_product_id, part_product_id, None, '-')
+                    else:
+                        part_product_id = item_values[1]  # Assuming SKU is the second value in item_values
+                        insert_query = "INSERT INTO sellercloud.harvest_parts (ChassisPurchaseGroup, PartProductID) VALUES (%s, %s)"
+                        cursor.execute(insert_query, (chassis_purchase_group, part_product_id))
+                        connection.commit()
 
                     table1.insert('', 'end', values=item_values)
-                    # flash_color('green', 500)
-                    
                     count = count + 1
-                    
                     value3.configure(text=count)
 
 
@@ -406,7 +528,7 @@ def remove_from_harvestable(event, table1, table2, value1):
     if value1.cget('text') != '-':
         selected_items = table1.selection()
         if selected_items == ():
-            flash_color('red', 500)
+            # flash_color('red', 500)
             messagebox.showwarning(title='Warning', message='Please select an item to remove.')
             return
         
@@ -452,55 +574,11 @@ def remove_from_harvestable(event, table1, table2, value1):
             connection.close()
 
 
-def create_label(sku, description):
-    html_template = f"""
-    <html>
-    <head>
-        <style>
-            body {{
-                font-family: Arial, sans-serif;
-                font-size: 12px;
-            }}
-            .label {{
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                width: 300px;
-                height: 100px;
-                border: 1px solid black;
-                padding: 10px;
-            }}
-            .qr-code {{
-                width: 80px;
-                height: 80px;
-            }}
-            .label-content {{
-                flex-grow: 1;
-                margin-right: 10px;
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="label">
-            <div class="label-content">
-                <div><strong>SKU:</strong> {sku}</div>
-                <div><strong>Description:</strong> {description}</div>
-            </div>
-            <div class="qr-code">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={sku}" />
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-
-    with NamedTemporaryFile(delete=False, suffix=".pdf") as pdf_file:
-        pdfkit.from_string(html_template, pdf_file.name)
-        os.startfile(pdf_file.name, "print")
 
 import win32print
 
 def print_selected_row(event, table, selected_printer, qty_var, initials_entry):
+    table = get_selected_table(table1, table2)
     printer_name = selected_printer.get()
     initials = initials_entry.get()
 
@@ -522,20 +600,32 @@ def print_selected_row(event, table, selected_printer, qty_var, initials_entry):
     qty = int(qty)
     initials = initials.upper()
     
-    selected_row = table.selection()[0]
-    sku = table.item(selected_row, "values")[1]
-    description = table.item(selected_row, "values")[2]
+    selected_rows = table.selection()
+    
+    for selected_row in selected_rows:
+        sku = table.item(selected_row, "values")[1]
+        description = table.item(selected_row, "values")[2]
 
-    try:
-        print_dymo_label(printer_name, qty, sku, description, initials)
-        print("Printing")
-    except Exception as e:
-        # There was an error starting the print job, so close the printer handle and return
-        print("Error printing")
-        print(e.with_traceback)
-        return
+        try:
+            print_dymo_label(printer_name, qty, sku, description, initials)
+            qty_var.set(1)
+            print("Printing")
+        except Exception as e:
+            # There was an error starting the print job, so close the printer handle and return
+            print("Error printing")
+            print(e.with_traceback)
+            return
 
-
+def get_selected_table(table1, table2):
+    print("Selected table", selected_table)
+    if selected_table is table1:
+        print("Table 1 selected")
+        return table1
+    elif selected_table is table2:
+        print("Table 2 selected")
+        return table2
+    else:
+        return None
 
 
 def get_dymo_printer_name():
@@ -615,18 +705,19 @@ def increment_progress(progress, seconds, root):
 def show_splash_and_fetch_data(root, listbox):
     try:
         # Hide the main window
+        root.state('zoomed')
         root.withdraw()
+        
 
         # Show the splash screen
         splash = SplashScreen(root)
-
+        
         # Schedule the data fetching and progress bar updates
         root.after(0, fetch_data, listbox)
         increment_progress(splash.progress, 8, root)
 
         # Destroy the splash screen and show the main window after 5 seconds
         root.after(5000, lambda: [splash.destroy(), root.deiconify()])
-        # root.after(0, load_data)
     except Exception as e:
         print(e)
 
@@ -774,11 +865,30 @@ def display_max_qty_window(event, table1, table2):
     #     messagebox.showwarning(title='Warning', message='Please select a row first.')
     
 def update_button_state(treeview, button):
-    if treeview.selection():
-        button.config(state=tk.NORMAL)
-    else:
-        button.config(state=tk.DISABLED)
-        
+    # if treeview.selection() and combo_box.get() != '':
+    button.config(state=tk.NORMAL)
+    # else:
+    #     button.config(state=tk.DISABLED)
+
+def table_select(treeview, button):
+    global selected_table
+    selected_table = treeview
+    try:
+        update_button_state(treeview, button)
+        if treeview == table1 and table2.selection():
+            print('table1 selected')
+            table2.selection_remove(table2.selection())
+            table1.focus()
+        elif treeview == table2 and table1.selection():
+            print('table2 selected')
+            table1.selection_remove(table1.selection())
+            table2.focus()
+
+    except Exception as e:
+        print(f"Error selecting row: {e}")
+
+def select_case_component(event):
+    update_button_state(table1, btn_add_to_harvest)
 
 def on_search_box_change():
     search_list(listbox, search_box)
@@ -880,23 +990,12 @@ def scroll_treeview(event):
 
 
 
-# create main window
-root = tk.Tk()
-root.geometry("1200x750")
-
-root.title("Harvest Tool")
-root.configure(background=background_color)
-
 # bind key events to increment/decrement quantity
 def on_key(event):
-    print(event.state)  # print the event state code
-    print(event.keysym)  # print the key pressed
     if event.keysym == "Prior":
         qty_var.set(str(int(qty_var.get()) + 1))
     elif event.keysym == "Next":
         qty_var.set(str(max(int(qty_var.get()) - 1, 1)))
-    # elif event.keysym == "P" and event.state == 4:  # ctrl+p
-    #     print_selected_row(event, table2, menu)
     elif event.keysym == "P" and event.state == 16:  # alt+p
         parts_search_box2.focus_set()
     elif event.keysym == "Tab":
@@ -907,9 +1006,180 @@ def on_key(event):
             search_box.focus_set()
             return "break"
 
-root.bind("<KeyPress>", on_key)
-root.bind("<Control-p>", lambda event: print_selected_row(event, table2, menu, qty_var, initials_entry))
+def fetch_and_update_labels(event, listbox, value1, value2, table1):
+    selected_item = listbox.get(listbox.curselection())
 
+    connection = mysql.connector.connect(host=mysql_host,
+                                         port=3306,
+                                         database=mysql_database,
+                                         user=mysql_user,
+                                         password=mysql_password)
+    try:
+        # Create a cursor object to interact with the database
+        cursor = connection.cursor()
+
+        query = "SELECT LocationNotes FROM ChassisProduct WHERE PURCHASEGROUP = %s LIMIT 1"
+
+        cursor.execute(query, (selected_item,))
+        
+        result = cursor.fetchall()
+        
+        print(result)
+        
+        count = len(result)
+        
+        log_message(f"Location notes results: {count}")
+
+        location_notes = result[0] if result else '-'
+        # location_notes = location_notes.replace('nan', '-').replace('{', '').replace('}', '')
+
+        value1.config(text=selected_item)
+        value2.config(text=location_notes)
+
+        # Query for parts associated with the selected purchase group
+        query = """
+            SELECT ap.ProductType, ap.ProductID, ap.ProductName, SUM(be.QtyAvailable), ap.InventoryHighStockNotice
+            FROM sellercloud.harvest_parts AS hp
+            LEFT JOIN sellercloud.AllProducts AS ap ON hp.PartProductID = ap.ProductID
+            LEFT JOIN sellercloud.BinExport AS be ON be.ProductID = ap.ProductID
+            WHERE hp.ChassisPurchaseGroup = %s AND ap.ProductID IS NOT NULL
+            GROUP BY ap.ProductID, ap.ProductName, ap.ProductType, ap.InventoryHighStockNotice
+
+            UNION ALL
+
+            SELECT 'CASE COMPONENT', hp.PartProductID, hp.PartProductID, NULL, NULL
+            FROM sellercloud.harvest_parts AS hp
+            LEFT JOIN sellercloud.AllProducts AS ap ON hp.PartProductID = ap.ProductID
+            WHERE hp.ChassisPurchaseGroup = %s AND ap.ProductID IS NULL
+        """
+        cursor.execute(query, (selected_item, selected_item))
+        results = cursor.fetchall()
+        
+        # print(results)
+        
+        count = len(results)
+        
+        log_message(f"Parts results: {count}")
+
+        # Clear table1
+        for row in table1.get_children():
+            table1.delete(row)
+        
+        # Create a dictionary to store the unique part types and their descriptions
+        unique_type = {}
+        
+        # Add the fetched parts to table1
+        for result in results:
+            type = result[0].lower().replace('parts - ', '')
+            keywords = {"motherboard", "psu", "power supply", "heatsink", "backplane", "control panel"}
+            
+            if type in ['part', 'parts']:
+                # print("UNIQUE", unique_type)
+                for keyword in keywords:
+                    # print("KEYWORD: ", keyword)
+                    if keyword in result[2].lower():
+                        unique_type[keyword] = result[2]
+                        break
+                # print("part")
+            else:
+                if type not in unique_type:
+                    unique_type[type] = result[2]
+            # if result[1] not in unique_type:
+
+            if result[4] is not None:
+                high_stock_notice = str(result[4])
+                if high_stock_notice == "nan":
+                    high_stock_notice = "-"
+                else:
+                    # convert to int
+                    high_stock_notice = int(float(high_stock_notice))
+            else:
+                high_stock_notice = "-"
+            table1.insert('', 'end', values=(result[0], result[1], result[2], result[3], high_stock_notice))
+        print("__________________________")
+        # if table2.winfo_ismapped():
+        #     pass
+        # else:
+        if icon_frame.winfo_ismapped():
+            pass
+        else:
+            # table_frame1.pack_forget()
+            icon_frame.pack(side='top', fill='x', before=table_frame1)
+            # icon_frame.place(x=0, y=0)
+            # table_frame1.pack(fill='x')
+            
+        hide_icons()
+        for part in unique_type:
+            # add_icon(part, icon_frame)
+            show_icon(part)
+            icon_frame.update()
+            
+        # get the number of parts in the table
+        count = len(table1.get_children())
+        print("COUNT: ", count)
+        value3.config(text=count)
+
+    finally:
+        cursor.close()
+        connection.close()
+
+# Unhide a canvas based on the name of the icon
+def show_icon(icon_name):
+    for i, icon_canvas in enumerate(icon_canvas_list):
+        if icon_canvas.icon_name == icon_name:
+            icon_canvas.pack(side='left', padx=50)
+            
+def create_icons(icon_frame):
+    global icon_canvas_list, icon_photo_list
+    
+    for name in icon_names:
+        path = icon_path
+        if name == 'motherboard':
+            path += "motherboard.png"
+        elif name == 'power supply':
+            path += "power-supply.png"
+        elif name == 'heatsink':
+            path += "heatsink.png"
+        elif name == 'fan':
+            path += "cooling-fan.png"
+        elif name == 'case component':
+            path += "component.png"
+        elif name == 'backplane':
+            path += "backplane.png"
+        icon = Image.open(path)
+        icon = icon.resize((150, 150), Image.ANTIALIAS)
+        icon_image = ImageTk.PhotoImage(icon)
+        canvas = tk.Canvas(icon_frame, width=150, height=150, highlightthickness=0, background=background_color)
+        canvas.create_image(0, 0, anchor=tk.NW, image=icon_image)
+        canvas.pack()
+        canvas.icon_name = name
+        icon_photo_list.append(icon_image)
+        icon_canvas_list.append(canvas)
+
+# Define function to show icons
+def show_icons():
+    for icon_canvas in icon_canvas_list:
+        icon_canvas.pack()
+
+# Define function to hide icons
+def hide_icons():
+    for icon_canvas in icon_canvas_list:
+        icon_canvas.pack_forget()
+         
+# create main window
+root = tk.Tk()
+root.geometry("1200x750")
+
+root.title("Harvest Tool")
+root.configure(background=background_color)
+
+# Define icon path and names
+icon_path = "C:\\HarvestAudit\\images\\icon\\"
+icon_names = ['motherboard', 'power supply', 'heatsink', 'fan', 'case component', 'backplane']
+
+# Create list of canvas widgets for icons
+icon_canvas_list = []
+icon_photo_list = []
 # set window to full screen
 # root.attributes("-fullscreen", True)
 
@@ -948,9 +1218,7 @@ pcsp_logo = ImageTk.PhotoImage(pcsp_logo)
 canvas = tk.Canvas(image_frame, width=96, height=64, bg='#26242f', highlightthickness=0)
 canvas.pack(side='left')
 canvas.create_image(0, 0, anchor=tk.NW, image=pcsp_logo)
-canvas.bind("<Enter>", on_widget_enter)
-canvas.bind("<Leave>", on_widget_leave)
-canvas.bind('<ButtonRelease-1>', lambda event: open_pcsp())
+
 
 # sc_logo_path = "C:\HarvestAudit\images\logo\SC_Original.png"
 # sc_logo = Image.open(sc_logo_path)
@@ -976,13 +1244,6 @@ other_button = tk.Button(button_bar1, text='Other')
 init_button(other_button, 'server', 'left')
 init_button(server_button, 'workstation', 'left')
 init_button(ws_button, 'other', 'left')
-other_button.bind('<Button-1>', lambda event: toggle_button(other_button, 'other'))
-server_button.bind('<Button-1>', lambda event: toggle_button(server_button, 'server'))
-ws_button.bind('<Button-1>', lambda event: toggle_button(ws_button, 'workstation'))
-
-# server_button.bind('<Button-1>', lambda event: filter_by_product_type('server'))
-# ws_button.bind('<Button-1>', lambda event: filter_by_product_type('workstation'))
-# other_button.bind('<Button-1>', lambda event: filter_by_product_type('other'))
 
 # create button bar
 button_bar_utils = tk.Frame(left_frame)
@@ -1003,9 +1264,7 @@ init_button(search_sku_button, 'workstation', 'left')
 search_box = tk.Entry(left_frame, textvariable=search_var, borderwidth=10, relief=tk.FLAT)
 search_box.pack(fill='x', padx=10, pady=10)
 search_box.config(background='#5c596b', foreground='#ffffff', font=('Arial', 12, 'bold'))
-search_box.bind('<FocusIn>', lambda event: on_search_box_focus_in(event, search_box))
-search_box.bind('<FocusOut>', lambda event: on_search_box_focus_out(event, search_box))
-search_box.bind('<Return>', lambda event: on_search_box_enter(event, listbox, search_box))
+
 search_var.trace("w", lambda name, index, mode: on_search_box_change())
 
 
@@ -1018,9 +1277,6 @@ listbox.pack(padx=10, pady=10, fill='both', expand=True)
 
 # configure listbox padding
 listbox.configure(background='#26242f', foreground='#ffffff', bd=0, font=('Arial', 12, 'bold'), selectbackground='#bfd660', selectforeground='black', highlightcolor='#26242f', borderwidth=10, relief=tk.FLAT)
-listbox.bind("<Enter>", on_widget_enter)
-listbox.bind("<Leave>", on_widget_leave)
-listbox.bind("<ButtonRelease-1>", lambda event: fetch_and_update_labels(event, listbox, value1, value2, table1))
 
 # create right frame
 right_frame = tk.Frame(root, bg=background_color, padx=10, pady=10)
@@ -1035,7 +1291,8 @@ style.configure("Treeview", background=background_color, foreground=white_foregr
 
 # CHASSIS LABEL FRAME ****************************************************
 
-label_frame.pack(fill=tk.X)
+label_frame.pack(fill=tk.X, side='top', expand=True)
+# label_frame.place(relx=0.5, rely=2, anchor='n')
 label_frame.configure(height=150, bd=0, highlightthickness=0, background=background_color, foreground=white_foreground_color)
 label_frame.pack_propagate(0)
 
@@ -1067,12 +1324,22 @@ init_label(label3)
 value3 = tk.Label(frame3, text='-')
 init_value(value3)
 
+icon_frame = tk.Frame(right_frame)
+icon_frame.configure(height=150, bd=0, highlightthickness=0, background=background_color)
+icon_frame.pack(side='top', fill='x')
 
+# Create icons and store canvas in list
+create_icons(icon_frame)
+
+# Initially hide the icons
+hide_icons()
+icon_frame.pack_forget()
 
 # TABLE 1 *************************************************************
 
 table_frame1 = tk.Frame(right_frame)
-table_frame1.pack(fill='x')
+table_frame1.pack(fill='both', expand=True)
+# table_frame1.place(relx=0.5, rely=2, anchor='s')
 table_frame1.config(background=background_color)
 
 # create table1 label
@@ -1086,16 +1353,6 @@ table_columns = ('Type', 'SKU', 'Description', 'Qty', 'Max Qty')
 # create a variable for the search box in the parts table 
 parts_search_var = tk.StringVar()
 
-# create search box for the table
-# parts_search_box = tk.Entry(table_frame1, textvariable=parts_search_var, borderwidth=10, relief=tk.FLAT)
-# parts_search_box.pack(side='right', padx=10, pady=10)
-# parts_search_box.config(background='#5c596b', foreground='#ffffff', font=('Arial', 12, 'bold'))
-# parts_search_box.bind('<FocusIn>', lambda event: on_search_box_focus_in(event, parts_search_box))
-# parts_search_box.bind('<FocusOut>', lambda event: on_search_box_focus_out(event, parts_search_box))
-# parts_search_box.bind('<Return>', lambda event: search_parts(event, listbox, parts_search_box))
-# parts_search_var.trace("w", lambda name, index, mode: search_parts())
-
-
 table1 = ttk.Treeview(right_frame, columns=table_columns, show='headings')
 for column in table_columns:
     table1.heading(column, text=column)
@@ -1106,8 +1363,6 @@ table1.column("SKU", width=100, anchor="center")
 table1.column("Description", width=300)
 table1.column("Qty", width=60, anchor="center")
 table1.column("Max Qty", width=80, anchor="center")
-table1.bind('<<TreeviewSelect>>', lambda event: update_button_state(table1, btn_remove_harvest))
-
 
 # create button bar
 button_bar2 = tk.Frame(right_frame)
@@ -1118,9 +1373,6 @@ btn_print = tk.Button(button_bar2, text='Print Selected')
 btn_print.pack(side='left', padx=10, pady=10)
 btn_print.config(background=blue_foreground_color)
 init_button(btn_print, "", 'left')
-# btn_print.bind('<Enter>', lambda event: on_widget_enter)
-# btn_print.bind('<Leave>', lambda event: on_widget_leave)
-btn_print.bind('<ButtonRelease-1>', lambda event: print_selected_row(event, table2, menu, qty_var, initials_entry))
 
 qty_label = tk.Label(button_bar2, text="Qty:")
 qty_var = tk.StringVar(value="1")
@@ -1149,44 +1401,32 @@ dropdown = tk.OptionMenu(button_bar2, menu, *printers)
 dropdown.pack(side='left', padx=10, pady=10)
 dropdown.config(background=background_color, foreground=white_foreground_color, font=('Arial', 12, 'bold'), width=25)
 
-
-
-
+# Create a button that toggles the frame
+hide_button_text = tk.StringVar()
+hide_button_text.set("Hide Parts")
+hide_button = tk.Button(button_bar2, textvariable=hide_button_text, command=lambda: toggle_parts_frame(table_frame2, hide_button_text, table2, btn_add_to_harvest, btn_remove_harvest, btn_edit_max_qty, icon_frame))
+hide_button.pack(side='left', pady=10)
+init_button(hide_button, "", 'left')
     
 btn_view_on_google = tk.Button(button_bar2, text='Google')
 btn_view_on_google.pack(side='right', padx=10, pady=10)
 btn_view_on_google.config(background=highlight_color)
-btn_view_on_google.bind('<Enter>', lambda event: on_widget_enter)
-btn_view_on_google.bind('<Leave>', lambda event: on_widget_leave)
-btn_view_on_google.bind('<ButtonRelease-1>', lambda event: view_on_google(table2))
 
 btn_view_on_sellercloud = tk.Button(button_bar2, text='Sellercloud')
 btn_view_on_sellercloud.pack(side='right', padx=(50, 5), pady=10)
 btn_view_on_sellercloud.config(background=blue_foreground_color)
-btn_view_on_sellercloud.bind('<Enter>', lambda event: on_widget_enter)
-btn_view_on_sellercloud.bind('<Leave>', lambda event: on_widget_leave)
-btn_view_on_sellercloud.bind('<ButtonRelease-1>', lambda event: view_on_sellercloud(table2))
 
 btn_add_to_harvest = tk.Button(button_bar2, text='Add to Harvestable')
 btn_add_to_harvest.pack(side='right', padx=10, pady=10)
-btn_add_to_harvest.config(background=highlight_color, state=tk.DISABLED)
-btn_add_to_harvest.bind('<Enter>', lambda event: on_widget_enter)
-btn_add_to_harvest.bind('<Leave>', lambda event: on_widget_leave)
-btn_add_to_harvest.bind('<ButtonRelease-1>', lambda event: add_to_harvestable(event, table2, table1, value1))
+btn_add_to_harvest.config(background=highlight_color, state=tk.NORMAL)
 
 btn_remove_harvest = tk.Button(button_bar2, text='Remove from Harvestable')
 btn_remove_harvest.pack(side='right', padx=10, pady=10)
-btn_remove_harvest.config(background='red', state=tk.DISABLED)
-btn_remove_harvest.bind('<Enter>', lambda event: on_widget_enter)
-btn_remove_harvest.bind('<Leave>', lambda event: on_widget_leave)
-btn_remove_harvest.bind('<ButtonRelease-1>', lambda event: remove_from_harvestable(event, table1, table2, value1))
+btn_remove_harvest.config(background='red', state=tk.NORMAL)
 
 btn_edit_max_qty = tk.Button(button_bar2, text='Edit Max Qty')
 btn_edit_max_qty.pack(side='right', padx=10, pady=10)
 btn_edit_max_qty.config(background=blue_foreground_color)
-btn_edit_max_qty.bind('<Enter>', lambda event: on_widget_enter)
-btn_edit_max_qty.bind('<Leave>', lambda event: on_widget_leave)
-btn_edit_max_qty.bind('<ButtonRelease-1>', lambda event: display_max_qty_window(event, table1, table2))
 
 # init_button(btn_print, "", "right")
 
@@ -1201,6 +1441,14 @@ table_label2 = tk.Label(table_frame2, text='All Parts')
 table_label2.pack(side='left', padx=10, pady=5)
 table_label2.config(background=background_color, foreground=blue_foreground_color, font=('Arial', 16, 'bold'))
 
+# create list with options
+case_components = ['EARS', 'FEET', 'PCI BLANKS', 'PCI CLIPS', 'FACEPLATE', 'M.2 SCREWS', 'HARD DRIVE SCREWS', 'DVD BRACKET', 'CACHE MODULE', 'RAID BATTERY', 'SATA CABLE(S)']
+
+# create combobox
+combo_box = ttk.Combobox(table_frame2, values=case_components)
+combo_box.pack(side='left', padx=10, pady=10)
+combo_box.config(background=background_color, foreground=white_foreground_color, font=('Arial', 12, 'bold'), width=25)
+
 # create a variable for the search box in the parts table 
 parts_search_var2 = tk.StringVar()
 
@@ -1208,20 +1456,11 @@ parts_search_var2 = tk.StringVar()
 parts_search_box2 = tk.Entry(table_frame2, textvariable=parts_search_var2, borderwidth=10, relief=tk.FLAT)
 parts_search_box2.pack(side='right', padx=10, pady=10)
 parts_search_box2.config(background='#5c596b', foreground='#ffffff', font=('Arial', 12, 'bold'))
-parts_search_box2.bind('<FocusIn>', lambda event: on_search_box_focus_in(event, parts_search_box2))
-parts_search_box2.bind('<FocusOut>', lambda event: on_search_box_focus_out(event, parts_search_box2))
 
-search_box.bind("<Up>", scroll_listbox)
-search_box.bind("<Down>", scroll_listbox)
-parts_search_box2.bind("<Up>", scroll_treeview)
-parts_search_box2.bind("<Down>", scroll_treeview)
-parts_search_box2.bind("<Return>", lambda event: print_selected_row(event, table2, menu, qty_var, initials_entry))
 
 # Call the search_and_update_treeview function every time the parts_search_var2 value changes
 parts_search_var2.trace("w", search_and_update_treeview)
 
-# parts_search_box.bind('<Return>', lambda event: search_all_parts(event, listbox, parts_search_box2))
-# parts_search_var2.trace("w", lambda name, index, mode: search_all_parts())
 
 table2 = ttk.Treeview(right_frame, columns=table_columns, show='headings')
 for column in table_columns:
@@ -1233,21 +1472,59 @@ table2.column("SKU", width=100, anchor="center")
 table2.column("Description", width=300)
 table2.column("Qty", width=60, anchor="center")
 table2.column("Max Qty", width=80, anchor="center")
+
+
+# WIDGET BINDINGS ************************************************************
+root.bind("<KeyPress>", on_key)
+root.bind("<Control-p>", lambda event: print_selected_row(event, selected_table, menu, qty_var, initials_entry))
+
+canvas.bind("<Enter>", on_widget_enter)
+canvas.bind("<Leave>", on_widget_leave)
+canvas.bind('<ButtonRelease-1>', lambda event: open_pcsp())
+
+other_button.bind('<Button-1>', lambda event: toggle_button(other_button, 'other'))
+server_button.bind('<Button-1>', lambda event: toggle_button(server_button, 'server'))
+ws_button.bind('<Button-1>', lambda event: toggle_button(ws_button, 'workstation'))
+
+
+listbox.bind("<Enter>", on_widget_enter)
+listbox.bind("<Leave>", on_widget_leave)
+listbox.bind("<ButtonRelease-1>", lambda event: fetch_and_update_labels(event, listbox, value1, value2, table1))
+
+btn_view_on_google.bind('<Enter>', lambda event: on_widget_enter)
+btn_view_on_google.bind('<Leave>', lambda event: on_widget_leave)
+btn_view_on_google.bind('<ButtonRelease-1>', lambda event: view_on_google(selected_table, value1))
+btn_print.bind('<ButtonRelease-1>', lambda event: print_selected_row(event, selected_table, menu, qty_var, initials_entry))
+btn_view_on_sellercloud.bind('<Enter>', lambda event: on_widget_enter)
+btn_view_on_sellercloud.bind('<Leave>', lambda event: on_widget_leave)
+btn_view_on_sellercloud.bind('<ButtonRelease-1>', lambda event: view_on_sellercloud(selected_table))
+btn_add_to_harvest.bind('<Enter>', lambda event: on_widget_enter)
+btn_add_to_harvest.bind('<Leave>', lambda event: on_widget_leave)
+btn_add_to_harvest.bind('<ButtonRelease-1>', lambda event: add_to_harvestable(event, table2, table1, value1))
+btn_remove_harvest.bind('<Enter>', lambda event: on_widget_enter)
+btn_remove_harvest.bind('<Leave>', lambda event: on_widget_leave)
+btn_remove_harvest.bind('<ButtonRelease-1>', lambda event: remove_from_harvestable(event, table1, table2, value1))
+btn_edit_max_qty.bind('<Enter>', lambda event: on_widget_enter)
+btn_edit_max_qty.bind('<Leave>', lambda event: on_widget_leave)
+btn_edit_max_qty.bind('<ButtonRelease-1>', lambda event: display_max_qty_window(event, table1, table2))
+
+search_box.bind('<FocusIn>', lambda event: on_search_box_focus_in(event, search_box))
+search_box.bind('<FocusOut>', lambda event: on_search_box_focus_out(event, search_box))
+search_box.bind('<Return>', lambda event: on_search_box_enter(event, listbox, search_box))
+search_box.bind("<Up>", scroll_listbox)
+search_box.bind("<Down>", scroll_listbox)
+parts_search_box2.bind('<FocusIn>', lambda event: on_search_box_focus_in(event, parts_search_box2))
+parts_search_box2.bind('<FocusOut>', lambda event: on_search_box_focus_out(event, parts_search_box2))
+parts_search_box2.bind("<Up>", scroll_treeview)
+parts_search_box2.bind("<Down>", scroll_treeview)
+parts_search_box2.bind("<Return>", lambda event: print_selected_row(event, selected_table, menu, qty_var, initials_entry))
+
+table1.bind('<ButtonRelease-1>', lambda event: table_select(table1, btn_add_to_harvest))
 table2.bind('<Double-1>', lambda event: on_double_click(event, table2))
-table2.bind('<<TreeviewSelect>>', lambda event: update_button_state(table2, btn_add_to_harvest))
 
-# # create table1 label
-# table_label2 = tk.Label(right_frame, text='Search All Parts')
-# table_label2.pack(side='left', padx=10, pady=5)
-# table_label2.config(background=background_color, foreground=blue_foreground_color, font=('Arial', 16, 'bold'))
+table2.bind('<ButtonRelease-1>', lambda event: table_select(table2, btn_add_to_harvest))
 
-# # create table1
-# table2 = ttk.Treeview(right_frame, columns=table_columns, show='headings')
-# for column in table_columns:
-#     table2.heading(column, text=column)
-# table2.pack(padx=10, pady=10, fill='both', expand=True)
-
-# Populate the dropdown list with printer names
+combo_box.bind("<<ComboboxSelected>>", select_case_component)
 
 show_splash_and_fetch_data(root, listbox)
 

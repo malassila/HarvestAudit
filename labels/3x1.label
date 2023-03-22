@@ -134,7 +134,7 @@
 			<IsOutlined>False</IsOutlined>
 			<Text>12345</Text>
 			<Type>QRCode</Type>
-			<Size>Medium</Size>
+			<Size>Large</Size>
 			<TextPosition>None</TextPosition>
 			<TextFont Family="Arial" Size="8" Bold="False" Italic="False" Underline="False" Strikeout="False" />
 			<CheckSumFont Family="Arial" Size="8" Bold="False" Italic="False" Underline="False" Strikeout="False" />
