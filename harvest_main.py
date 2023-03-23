@@ -72,39 +72,6 @@ def save_data():
         json.dump(data, f)
         
     threading.Timer(20.0, save_data).start() # call this function again after 20 seconds
-
-# def login_as_admin():
-#     # Connect to the database
-#     connection = mysql.connector.connect(host=mysql_host,
-#                                         port=3306,
-#                                         database=mysql_database,
-#                                         user=mysql_user,
-#                                         password=mysql_password)
-
-#     # Create a cursor object to interact with the database
-#     cursor = connection.cursor()
-
-#     # Get the entered username and password
-#     entered_username = input('Enter your username: ')
-#     entered_password = input('Enter your password: ')
-
-#     # Hash the entered password
-#     hashed_password = hashlib.sha256(entered_password.encode()).hexdigest()
-
-#     # Check if the entered username and password are valid
-#     cursor.execute('SELECT is_admin FROM sellercloud.users WHERE username=%s AND password=%s', (entered_username, hashed_password))
-#     result = cursor.fetchone()
-
-#     if result is None:
-#         print('Invalid username or password')
-#     else:
-#         is_admin = result[0]
-#         if is_admin:
-#             # Unlock the advanced features
-#             # TODO: Add code to enable the advanced features here
-#             unlock_admin_features()
-#         else:
-#             print('You do not have admin privileges')
         
 def unlock_admin_features():
     messagebox.showinfo("Admin Login", "Welcome, administrator! Please be aware that with great power comes great responsibility. As an admin, you have access to sensitive features and information that should be used with care. Please ensure that you are authorized to perform any actions you take.")
