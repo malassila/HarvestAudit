@@ -27,6 +27,7 @@ from database import *
 from ui_toggle import *
 from icons import *
 from print import *
+import hashlib
 
 # initialize the global variables
 selected_table = None
@@ -72,9 +73,96 @@ def save_data():
         
     threading.Timer(20.0, save_data).start() # call this function again after 20 seconds
 
+# def login_as_admin():
+#     # Connect to the database
+#     connection = mysql.connector.connect(host=mysql_host,
+#                                         port=3306,
+#                                         database=mysql_database,
+#                                         user=mysql_user,
+#                                         password=mysql_password)
 
+#     # Create a cursor object to interact with the database
+#     cursor = connection.cursor()
+
+#     # Get the entered username and password
+#     entered_username = input('Enter your username: ')
+#     entered_password = input('Enter your password: ')
+
+#     # Hash the entered password
+#     hashed_password = hashlib.sha256(entered_password.encode()).hexdigest()
+
+#     # Check if the entered username and password are valid
+#     cursor.execute('SELECT is_admin FROM sellercloud.users WHERE username=%s AND password=%s', (entered_username, hashed_password))
+#     result = cursor.fetchone()
+
+#     if result is None:
+#         print('Invalid username or password')
+#     else:
+#         is_admin = result[0]
+#         if is_admin:
+#             # Unlock the advanced features
+#             # TODO: Add code to enable the advanced features here
+#             unlock_admin_features()
+#         else:
+#             print('You do not have admin privileges')
         
+def unlock_admin_features():
+    messagebox.showinfo("Admin Login", "Welcome, administrator! Please be aware that with great power comes great responsibility. As an admin, you have access to sensitive features and information that should be used with care. Please ensure that you are authorized to perform any actions you take.")
+    pass
 
+def login_as_admin():
+    # Create the login window
+    login_window = tk.Toplevel()
+    login_window.title("Unlock Admin Features")
+    login_window.geometry("400x200")
+    
+    login_frame = tk.Frame(login_window)
+    login_frame.pack()
+    
+    # Create the username label and entry widget
+    username_label = tk.Label(login_frame, text="Username")
+    username_label.pack()
+    username_entry = tk.Entry(login_frame)
+    username_entry.pack()
+
+    # Create the password label and entry widget
+    password_label = tk.Label(login_frame, text="Password")
+    password_label.pack()
+    password_entry = tk.Entry(login_frame, show="*")
+    password_entry.pack()
+
+    # Create the login button
+    login_button = tk.Button(login_frame, text="Login", command=lambda: check_login(username_entry.get(), password_entry.get()))
+    login_button.pack()
+
+    def check_login(username, password):
+        # Connect to the database
+        connection = mysql.connector.connect(host=mysql_host,
+                                             port=3306,
+                                             database=mysql_database,
+                                             user=mysql_user,
+                                             password=mysql_password)
+
+        # Create a cursor object to interact with the database
+        cursor = connection.cursor()
+
+        # Hash the password
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+        # Check if the entered username and password are valid
+        cursor.execute('SELECT is_admin FROM sellercloud.users WHERE username=%s AND password=%s', (username, hashed_password))
+        result = cursor.fetchone()
+
+        if result is None:
+            tk.messagebox.showerror("Error", "Invalid username or password")
+        else:
+            is_admin = result[0]
+            if is_admin:
+                # Unlock the advanced features
+                unlock_admin_features()
+                login_window.destroy()
+            else:
+                tk.messagebox.showerror("Error", "You do not have admin privileges")
 
 def fetch_data(listbox):
     global selected_button, server_button, ws_button, other_button, background_color, original_items
@@ -1253,7 +1341,7 @@ def hide_icons():
          
 # create main window
 root = tk.Tk()
-root.geometry("1200x750")
+root.geometry("1300x750")
 
 root.title("Harvest Tool")
 root.configure(background=background_color)
@@ -1304,6 +1392,9 @@ canvas = tk.Canvas(image_frame, width=96, height=64, bg='#26242f', highlightthic
 canvas.pack(side='left')
 canvas.create_image(0, 0, anchor=tk.NW, image=pcsp_logo)
 
+admin_button = tk.Button(image_frame, text="Unlock Admin", command=login_as_admin)
+admin_button.pack()
+init_button(admin_button, "", 'left')
 
 # sc_logo_path = "C:\HarvestAudit\images\logo\SC_Original.png"
 # sc_logo = Image.open(sc_logo_path)
