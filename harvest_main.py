@@ -1,8 +1,8 @@
 import threading
 import time
-import qrcode
-import asyncio
+import socket
 import json
+import traceback
 import os
 import win32print
 from win32print import JOB_INFO_1
@@ -20,14 +20,13 @@ import mysql.connector
 from tkinter import PhotoImage
 from PIL import Image, ImageTk
 from jinja2 import Template
-import pdfkit
 from tempfile import NamedTemporaryFile
 from effects import *
 from browser import *
 from database import *
 from ui_toggle import *
 from icons import *
-from print import print_dymo_label
+from print import *
 
 # initialize the global variables
 selected_table = None
@@ -45,6 +44,9 @@ mysql_host = '192.168.1.156'
 mysql_database = 'sellercloud'
 mysql_user = 'python'
 mysql_password = 'ghXryPCSP2022!'
+
+hostname = socket.gethostname()
+ip_address = socket.gethostbyname(hostname)
 
 log_path = "C:\\HarvestAudit\\log.txt"
 
@@ -119,9 +121,92 @@ def fetch_data(listbox):
         # Close the cursor and the connection
         cursor.close()
         connection.close()
-            
+
+def fetch_chassis_with_harvest_parts(listbox):
+    # Connect to the MySQL database
+    connection = mysql.connector.connect(host=mysql_host,
+                                         port=3306,
+                                         database=mysql_database,
+                                         user=mysql_user,
+                                         password=mysql_password)
+
+    try:
+        # Create a cursor object to interact with the database
+        cursor = connection.cursor()
+
+        # Execute the SQL query to fetch the distinct ChassisPurchaseGroups
+        query = "SELECT DISTINCT ChassisPurchaseGroup FROM sellercloud.harvest_parts"
+
+        cursor.execute(query)
+
+        # Fetch the results
+        chassis_data = cursor.fetchall()
+
+        # Clear the listbox
+        listbox.delete(0, tk.END)
+        original_items = []
+
+        # Add the fetched data to the listbox and the original_items list
+        for chassis_tuple in chassis_data:
+            chassis = chassis_tuple[0]  # Unpack the tuple to remove the brackets
+            listbox.insert(tk.END, chassis)
+            original_items.append(chassis)
+
+    finally:
+        # Close the cursor and the connection
+        cursor.close()
+        connection.close()
+
+
+def fetch_chassis_without_harvest_parts(listbox):
+    # Connect to the MySQL database
+    connection = mysql.connector.connect(host=mysql_host,
+                                         port=3306,
+                                         database=mysql_database,
+                                         user=mysql_user,
+                                         password=mysql_password)
+
+    try:
+        # Create a cursor object to interact with the database
+        cursor = connection.cursor()
+
+        # Execute the SQL query to fetch the distinct PURCHASEGROUP values
+        # from ChassisProduct that are not in the ChassisPurchaseGroup column
+        # of the harvest_parts table
+        query = """
+            SELECT DISTINCT cp.PURCHASEGROUP
+            FROM sellercloud.ChassisProduct cp
+            LEFT JOIN sellercloud.harvest_parts hp
+                ON cp.PURCHASEGROUP = hp.ChassisPurchaseGroup
+            WHERE hp.ChassisPurchaseGroup IS NULL
+                AND cp.PURCHASEGROUP <> '' AND cp.PURCHASEGROUP IS NOT NULL AND cp.PURCHASEGROUP <> 'nan'
+            ORDER BY cp.PURCHASEGROUP
+        """
+
+        cursor.execute(query)
+
+        # Fetch the results
+        chassis_data = cursor.fetchall()
+
+        # Clear the listbox
+        listbox.delete(0, tk.END)
+        original_items = []
+        
+        # Add the fetched data to the listbox and the original_items list
+        for chassis_tuple in chassis_data:
+            chassis = chassis_tuple[0]  # Unpack the tuple to remove the brackets
+            listbox.insert(tk.END, chassis)
+            original_items.append(chassis)
+
+    finally:
+        # Close the cursor and the connection
+        cursor.close()
+        connection.close()
+
         
 def fetch_and_update_labels(event, listbox, value1, value2, table1):
+    if event.state == 4:  # check if Control key is held down
+        return  # exit the function if Control key is pressed
     selected_item = listbox.get(listbox.curselection())
 
     connection = mysql.connector.connect(host=mysql_host,
@@ -446,7 +531,8 @@ def add_to_harvestable(event, table2, table1, value1):
         selected_items = list(table2.selection())
         selected_items.append(combo_box.get())
         selected_items = tuple(selected_items)
-        if selected_items == ():
+        print(f"Selected items: -{selected_items}-")
+        if selected_items == () or selected_items == ('',):
             # flash_color('red', 500)
             messagebox.showwarning(title='Warning', message='What am I adding exactly? Select an item first')
             return
@@ -581,6 +667,8 @@ def print_selected_row(event, table, selected_printer, qty_var, initials_entry):
     table = get_selected_table(table1, table2)
     printer_name = selected_printer.get()
     initials = initials_entry.get()
+    # printer_name = "ZDesigner GX420d"
+    # initials = "ML"
 
     if printer_name == "Select a printer":
         messagebox.showwarning(title='Warning', message='Please select a printer before printing.')
@@ -607,13 +695,18 @@ def print_selected_row(event, table, selected_printer, qty_var, initials_entry):
         description = table.item(selected_row, "values")[2]
 
         try:
-            print_dymo_label(printer_name, qty, sku, description, initials)
+            if "dymo" in printer_name.lower():
+                print("Printing to DYMO")
+                print_dymo_label(printer_name, qty, sku, description, initials)
+            else:
+                print("Printing to Zebra")
+                print_zebra_label(printer_name, qty, sku, description, initials)
             qty_var.set(1)
-            print("Printing")
+            # print("Printing")
         except Exception as e:
             # There was an error starting the print job, so close the printer handle and return
             print("Error printing")
-            print(e.with_traceback)
+            print(traceback.format_exc())
             return
 
 def get_selected_table(table1, table2):
@@ -628,22 +721,14 @@ def get_selected_table(table1, table2):
         return None
 
 
-def get_dymo_printer_name():
-    printers = win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS)
-    for printer in printers:
-        if 'DYMO LabelWriter 450 Turbo' in printer[2]:
-            print(printer[2])
-            print("Printer found")
-            return printer[2]
-    return None
-
 def get_printer_list():
     # Get a list of all printers installed on the system
-    printers = win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS)
+    printers = win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS | win32print.PRINTER_INFO_1)
     printer_list = []
     for printer in printers:
         printer_list.append(printer[2])
     return printer_list
+
        
 class SplashScreen(tk.Toplevel):
     def __init__(self, parent):
@@ -1251,9 +1336,14 @@ button_bar_utils.pack(side='top')
 button_bar_utils.config(background='#26242f')
 
 refresh_button = tk.Button(button_bar_utils, text="Refresh", command=lambda: fetch_data(listbox))
-refresh_button.pack(side='left' , padx=10, pady=10)
+refresh_button.pack(side='left' , padx=5, pady=10)
 search_sku_button = tk.Button(button_bar_utils, text="Search SKU", command=lambda: fetch_sku(search_box, listbox))
-search_sku_button.pack(side='left' , padx=10, pady=10)
+search_sku_button.pack(side='left' , padx=5, pady=10)
+with_button = tk.Button(button_bar_utils, text="With", command=lambda: fetch_chassis_with_harvest_parts(listbox))
+with_button.pack(side='left' , padx=5, pady=10)
+without_button = tk.Button(button_bar_utils, text="Without", command=lambda: fetch_chassis_without_harvest_parts(listbox))
+without_button.pack(side='left' , padx=5, pady=10)
+
 
 init_button(refresh_button, 'server', 'left')
 init_button(search_sku_button, 'workstation', 'left')
@@ -1272,7 +1362,7 @@ search_var.trace("w", lambda name, index, mode: on_search_box_change())
 # CHASSIS LISTBOX ************************************************************
 
 # create listbox
-listbox = tk.Listbox(left_frame)
+listbox = tk.Listbox(left_frame, selectmode="extended")
 listbox.pack(padx=10, pady=10, fill='both', expand=True)
 
 # configure listbox padding
@@ -1282,7 +1372,7 @@ listbox.configure(background='#26242f', foreground='#ffffff', bd=0, font=('Arial
 right_frame = tk.Frame(root, bg=background_color, padx=10, pady=10)
 right_frame.pack(side='left', fill='both', expand=True)
 
-label_frame = tk.LabelFrame(right_frame, padx=10, pady=10, height=50)
+label_frame = tk.LabelFrame(right_frame, height=50)
 style = ttk.Style(root)
 style.theme_use("clam")
 style.configure("Treeview", background=background_color, foreground=white_foreground_color, fieldbackground=background_color, font=('Arial', 12, 'bold'))
@@ -1326,26 +1416,26 @@ init_value(value3)
 
 icon_frame = tk.Frame(right_frame)
 icon_frame.configure(height=150, bd=0, highlightthickness=0, background=background_color)
-icon_frame.pack(side='top', fill='x')
 
 # Create icons and store canvas in list
 create_icons(icon_frame)
 
 # Initially hide the icons
 hide_icons()
-icon_frame.pack_forget()
+# icon_frame.pack_forget()
 
 # TABLE 1 *************************************************************
 
 table_frame1 = tk.Frame(right_frame)
 table_frame1.pack(fill='both', expand=True)
+icon_frame.pack(side='top', fill='x', before=table_frame1)
 # table_frame1.place(relx=0.5, rely=2, anchor='s')
-table_frame1.config(background=background_color)
+table_frame1.config(background=background_color, height=700)
 
 # create table1 label
 table_label1 = tk.Label(table_frame1, text='Parts to Harvest')
-table_label1.pack(side='left', padx=10, pady=5)
-table_label1.config(background=background_color, foreground=blue_foreground_color, font=('Arial', 16, 'bold'))
+table_label1.pack(side='left')
+table_label1.config(background=background_color, foreground=white_foreground_color, font=('Arial', 16, 'bold'))
 
 # define table columns for both tables
 table_columns = ('Type', 'SKU', 'Description', 'Qty', 'Max Qty')
@@ -1356,7 +1446,7 @@ parts_search_var = tk.StringVar()
 table1 = ttk.Treeview(right_frame, columns=table_columns, show='headings')
 for column in table_columns:
     table1.heading(column, text=column)
-table1.pack(padx=10, pady=10, fill='both', expand=True)
+table1.pack(fill='both', expand=True)
 
 table1.column("Type", width=120, anchor="center")
 table1.column("SKU", width=100, anchor="center")
@@ -1364,14 +1454,16 @@ table1.column("Description", width=300)
 table1.column("Qty", width=60, anchor="center")
 table1.column("Max Qty", width=80, anchor="center")
 
+# table1.config(height=700)
+
 # create button bar
 button_bar2 = tk.Frame(right_frame)
 button_bar2.pack(side='top', fill='x')
-button_bar2.config(background='#2f2d38')
+button_bar2.config(background='#2f2d38', height=50)
 
 btn_print = tk.Button(button_bar2, text='Print Selected')
 btn_print.pack(side='left', padx=10, pady=10)
-btn_print.config(background=blue_foreground_color)
+btn_print.config(background=background_color)
 init_button(btn_print, "", 'left')
 
 qty_label = tk.Label(button_bar2, text="Qty:")
@@ -1404,7 +1496,7 @@ dropdown.config(background=background_color, foreground=white_foreground_color, 
 # Create a button that toggles the frame
 hide_button_text = tk.StringVar()
 hide_button_text.set("Hide Parts")
-hide_button = tk.Button(button_bar2, textvariable=hide_button_text, command=lambda: toggle_parts_frame(table_frame2, hide_button_text, table2, btn_add_to_harvest, btn_remove_harvest, btn_edit_max_qty, icon_frame))
+hide_button = tk.Button(button_bar2, textvariable=hide_button_text, command=lambda: toggle_parts_frame(table_frame2, hide_button_text, table2, btn_add_to_harvest, btn_remove_harvest, btn_edit_max_qty, icon_frame, table1))
 hide_button.pack(side='left', pady=10)
 init_button(hide_button, "", 'left')
     
