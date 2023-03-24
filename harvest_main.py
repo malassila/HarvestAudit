@@ -27,6 +27,7 @@ from database import *
 from ui_toggle import *
 from icons import *
 from print import *
+from log_events import *
 import hashlib
 import re
 
@@ -795,6 +796,8 @@ def flash_color(color, duration):
     popup.after(duration, lambda: fade_out(1.0))
     
 def add_to_harvestable(event, table2, table1, value1):
+    user = user_label.cget('text')
+    chassis = value1.cget('text')
     if btn_add_to_harvest['state'] == tk.DISABLED:
         return
     
@@ -820,7 +823,9 @@ def add_to_harvestable(event, table2, table1, value1):
                                              password=mysql_password)
         try:
             cursor = connection.cursor()
-
+            
+            logs = []
+            
             for item in selected_items:
                 if isinstance(item, str):
                     item_values = (item,)
@@ -860,12 +865,14 @@ def add_to_harvestable(event, table2, table1, value1):
                         insert_query = "INSERT INTO sellercloud.harvest_parts (ChassisPurchaseGroup, PartProductID) VALUES (%s, %s)"
                         cursor.execute(insert_query, (chassis_purchase_group, part_product_id))
                         connection.commit()
-
+                        
+                    logs.append((user, part_product_id, chassis, "add")) # Add log to the list
+                    
                     table1.insert('', 'end', values=item_values)
                     count = count + 1
                     value3.configure(text=count)
 
-
+            log_add_remove_event(logs)
             table1.selection_remove(table1.selection())
             table2.selection_remove(table2.selection())
 
@@ -877,6 +884,8 @@ def add_to_harvestable(event, table2, table1, value1):
         messagebox.showwarning(title='Warning', message='Please select a chassis first.')
 
 def remove_from_harvestable(event, table1, table2, value1):
+    user = user_label.cget('text')
+    chassis = value1.cget('text')
     if btn_remove_harvest['state'] == tk.DISABLED:
         return
     
@@ -905,12 +914,12 @@ def remove_from_harvestable(event, table1, table2, value1):
                                             password=mysql_password)
         try:
             cursor = connection.cursor()
-
+            logs = []
             for item in selected_items:
                 item_values = table1.item(item, 'values')
                 chassis_purchase_group = value1.cget('text')
                 part_product_id = item_values[1]  # Assuming SKU is the second value in item_values
-
+                logs.append((user, part_product_id, chassis, "remove")) # Add log to the list
                 delete_query = "DELETE FROM sellercloud.harvest_parts WHERE ChassisPurchaseGroup = %s AND PartProductID = %s"
                 cursor.execute(delete_query, (chassis_purchase_group, part_product_id))
                 connection.commit()
@@ -921,7 +930,8 @@ def remove_from_harvestable(event, table1, table2, value1):
                 count = count - 1
                 
                 value3.configure(text=count)
-
+                
+            log_add_remove_event(logs)
             table1.selection_remove(table1.selection())
             table2.selection_remove(table2.selection())
 
@@ -934,6 +944,8 @@ import win32print
 def print_selected_row(event, table, selected_printer, qty_var, initials):
     table = get_selected_table(table1, table2)
     printer_name = selected_printer.get()
+    user = user_label.cget('text')
+    chassis = value1.cget('text')
     # initials = initials_entry.get()
     # printer_name = "ZDesigner GX420d"
     # initials = "ML"
@@ -957,18 +969,22 @@ def print_selected_row(event, table, selected_printer, qty_var, initials):
     initials = initials.upper()
     
     selected_rows = table.selection()
-    
+    # Create an empty list to store logs
+    logs = []
+
+    # Loop through selected rows
     for selected_row in selected_rows:
         sku = table.item(selected_row, "values")[1]
         description = table.item(selected_row, "values")[2]
-
         try:
             if "dymo" in printer_name.lower():
                 print("Printing to DYMO")
                 print_dymo_label(printer_name, qty, sku, description, initials)
+                logs.append((user, sku, chassis)) # Add log to the list
             else:
                 print("Printing to Zebra")
                 print_zebra_label(printer_name, qty, sku, description, initials)
+                logs.append((user, sku, chassis)) # Add log to the list
             qty_var.set(1)
             # print("Printing")
         except Exception as e:
@@ -976,6 +992,9 @@ def print_selected_row(event, table, selected_printer, qty_var, initials):
             print("Error printing")
             print(traceback.format_exc())
             return
+
+    # Insert the logs into the database
+    log_print(logs)
 
 def get_selected_table(table1, table2):
     print("Selected table", selected_table)
@@ -1275,6 +1294,7 @@ def load_data():
         print(f"Error loading saved data: {e}")
 
 def load_general_user(username, init):
+    log_login_event(username)
     global btn_add_to_harvest, btn_remove_harvest, btn_edit_max_qty, user_label, create_user_btn, initials
     user_label.config(text=username.upper(), fg=highlight_color)
     initials.config(text=init.upper())
@@ -1284,6 +1304,7 @@ def load_general_user(username, init):
     create_user_btn.pack_forget()
     
 def load_admin_user(username, init):
+    log_login_event(username)
     if len(init) != 2:
         init = "XX"
     global btn_add_to_harvest, btn_remove_harvest, btn_edit_max_qty, user_label, button_bar2, create_user_btn, initials
@@ -1295,7 +1316,6 @@ def load_admin_user(username, init):
     btn_edit_max_qty.pack(side='right', padx=10, pady=10)
     create_user_btn.pack(padx=10, pady=10)
     init_button(create_user_btn, "", "left")
-    
     
 def on_closing():
     # stop all running threads
