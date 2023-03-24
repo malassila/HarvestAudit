@@ -126,46 +126,6 @@ def print_zebra_label(printer_name, qty, sku, description, initials):
         print("Error printing ZPL label: " + str(e))
         print(traceback.format_exc())
     
-    
-    
-# def format_zebra_description(description): # This is version 1 of the function and will be commented out
-#     description = description.split()
-#     new_description = []
-#     new_line = ""
-#     line_len = 0
-    
-#     for i, word in enumerate(description):
-#         word_len = len(word)
-#         if line_len + word_len + 1 > 30:
-#             new_description.append(new_line)
-#             line_len = 0
-#             new_line = ""
-#         else:
-#             if i != len(description) - 1:
-#                 new_line += word + " "
-#                 word = ""
-#             else:
-#                 new_line += word
-#                 word = ""
-#             line_len += 1
-#         line_len += word_len
-#     new_description.append(word)
-    
-#     last_word = new_description[-1].replace(" ", "")
-#     if last_word != word:
-#         new_description.append(word)
-        
-#     # Get the size of the new description
-#     new_description_size = len(new_description)
-#     if len(new_description) == 1:
-#         new_description.append("")
-#         new_description.append("")
-#         new_description[1] = new_description[0]
-#         new_description[0] = ""
-#     elif len(new_description) == 2:
-#         new_description.append("")
-
-#     return new_description
 
 def format_zebra_description(description):
     if len(description) <= 30:

@@ -28,6 +28,7 @@ from ui_toggle import *
 from icons import *
 from print import *
 import hashlib
+import re
 
 # initialize the global variables
 selected_table = None
@@ -74,10 +75,16 @@ def save_data():
     threading.Timer(20.0, save_data).start() # call this function again after 20 seconds
         
 def unlock_admin_features():
-    messagebox.showinfo("Admin Login", "Welcome, administrator! Please be aware that with great power comes great responsibility. As an admin, you have access to sensitive features and information that should be used with care. Please ensure that you are authorized to perform any actions you take.")
+
     pass
 
 def login_as_admin():
+    global user_label
+    print(f"User label: {user_label.cget('text')}")
+    if user_label.cget("text") == "Admin":
+        messagebox.showinfo("Admin Logout", "You have successfully logged out as an administrator.")
+    
+        return
     # Create the login window
     login_window = tk.Toplevel()
     login_window.title("Unlock Admin Features")
@@ -97,9 +104,12 @@ def login_as_admin():
     password_label.pack()
     password_entry = tk.Entry(login_frame, show="*")
     password_entry.pack()
+    
+    username = username_entry.get()
+    password = password_entry.get()
 
     # Create the login button
-    login_button = tk.Button(login_frame, text="Login", command=lambda: check_login(username_entry.get(), password_entry.get()))
+    login_button = tk.Button(login_frame, text="Login", command=lambda: check_login(username, password))
     login_button.pack()
 
     def check_login(username, password):
@@ -126,11 +136,223 @@ def login_as_admin():
             is_admin = result[0]
             if is_admin:
                 # Unlock the advanced features
-                unlock_admin_features()
+                load_admin_user(username)
                 login_window.destroy()
             else:
                 tk.messagebox.showerror("Error", "You do not have admin privileges")
 
+def format_username(username):
+    return username.upper()
+
+def create_user():
+    def insert_user():
+            # Call the validate_form function before inserting data into the database
+        if not validate_form():
+            return
+        
+        # Get the username and password
+        username = username_entry.get()
+        password = password_entry.get()
+        initials = initials_entry.get()
+
+            
+        # Get the is_admin value
+        is_admin = is_admin_var.get()
+
+        # Hash the password
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+        # Connect to the database
+        connection = mysql.connector.connect(host=mysql_host,
+                                             port=3306,
+                                             database=mysql_database,
+                                             user=mysql_user,
+                                             password=mysql_password)
+
+        # Create a cursor object to interact with the database
+        cursor = connection.cursor()
+
+        # Insert the username, hashed password, and is_admin value into the database
+        cursor.execute("INSERT INTO sellercloud.users (username, password, is_admin, initials) VALUES (%s, %s, %s, %s)", (username, hashed_password, is_admin, initials))
+        connection.commit()
+
+        # Close the create user window
+        create_user_window.destroy()
+        
+        messagebox.showinfo("User Created", f"The user {username} has been created successfully.")
+        
+    # def validate_initials(initials):
+    #     # Allow only alphabetical characters
+    #     return re.match("^[a-zA-Z]+$", initials) is not None
+    def validate_form():
+        # Get the values from the form
+        username = username_entry.get()
+        password = password_entry.get()
+        initials = initials_entry.get()
+        # Validate the form
+        not_valid = False
+        error_message = "Error: Please enter a valid "
+        if len(username) == 0:
+            error_message += "username"
+            not_valid = True
+        else:
+            # Check if the username is already in the database
+            connection = mysql.connector.connect(host=mysql_host,
+                                                 port=3306,
+                                                 database=mysql_database,
+                                                 user=mysql_user,
+                                                 password=mysql_password)
+            cursor = connection.cursor()
+            cursor.execute("SELECT username FROM sellercloud.users WHERE username=%s", (username,))
+            result = cursor.fetchone()
+            if result is not None:
+                messagebox.showerror("ERROR", "Error: The username already exists!")
+                return False
+                
+        if len(password) == 0:
+            if error_message != "Error: Please enter a valid ":
+                error_message += ", password"
+            else:
+                error_message += "password"
+            not_valid = True
+        if len(initials) < 2 or not re.match("^[a-zA-Z]+$", initials):
+            if error_message != "Error: Please enter a valid ":
+                error_message += ", initials (2 alphabetical characters)"
+            else:
+                error_message += "initials (2 alphabetical characters)"
+            not_valid = True
+        error_message += "!"
+        if not_valid:
+            messagebox.showerror("Error", error_message)
+            create_user_window.lift()
+            return False
+        return True
+
+
+
+        
+    create_user_window = tk.Toplevel()
+    create_user_window.geometry("800x650")
+    create_user_window.resizable(False, False)
+
+    # Create left frame
+    left_frame = Frame(create_user_window, bg="#1b1923")
+    left_frame.place(relx=0, rely=0, relwidth=0.5, relheight=1)
+
+    # Set logo image in the center of the left frame
+    logo_image = PhotoImage(file="C:\\HarvestAudit\\images\\logo\\PCSP_Original_website_header_tight_crop_250px.png")
+    logo_label = Label(left_frame, image=logo_image, bg="#1b1923")
+    logo_label.place(relx=0.5, rely=0.5, anchor=CENTER)
+
+    # Create right frame
+    right_frame = Frame(create_user_window, bg="#26242f")
+    right_frame.place(relx=0.5, rely=0, relwidth=0.5, relheight=2)
+
+    blank_frame = Frame(right_frame, bg="#26242f")
+    blank_frame.pack(pady=60)
+
+    # Create "Create User" label in the right frame
+    create_user_label = Label(right_frame, text="Create User", font=("Helvetica", 32), fg="#bfd660", bg="#26242f")
+    create_user_label.pack(pady=10)
+    
+    
+    # Bind the function to the variable of username_entry
+    username_entry_var = StringVar()
+    
+    # Create username label and entry widget
+    username_label = Label(right_frame, text="Username", font=("Helvetica", 13, "bold"), fg="#315954", bg="#26242f")
+    username_label.pack(pady=10)
+    username_availability = StringVar()
+
+    username_entry = Entry(right_frame, textvariable=username_entry_var, font=("Helvetica", 14))
+    username_entry.pack()
+
+    # Create username availability label
+    username_availability_label = Label(right_frame, textvariable=username_availability)
+
+    username_availability_label.pack()
+    
+    username_entry_var.trace("w", lambda name, index, mode: check_username_availability(username_entry))
+
+    # username_entry_var.trace("w", check_username_availability)
+    # username_entry_var.trace("w", lambda name, index, mode, username_entry=username_entry: check_username_availability(username_entry))
+    # username_entry_var.trace("w", lambda name, index, mode, entry=username_entry: check_username_availability(entry))
+
+    
+    # Create password label and entry widget
+    password_label = Label(right_frame, text="Password", font=("Helvetica", 13, "bold"), fg="#315954", bg="#26242f")
+    password_label.pack(pady=10)
+    password_entry = Entry(right_frame, show="*", font=("Helvetica", 14))
+    password_entry.pack()
+    
+    # Create initials label and entry widget
+    initials_label = tk.Label(right_frame, text="Initials", font=("Helvetica", 13, "bold"), fg="#315954", bg="#26242f")
+    initials_label.pack(pady=10)
+
+    def validate_initials(initials):
+        # Allow only alphabetical characters and maximum length of 2
+        if re.match("^[a-zA-Z]{0,2}$", initials):
+            return True
+        else:
+            messagebox.showerror("Invalid Initials", "Initials must contain only alphabetical characters and be two characters.")
+            create_user_window.lift()
+            return False
+        
+    def check_username_availability():
+        # Get the entered username
+        username = username_entry.get()
+        print(username)
+        
+        # Connect to the database
+        connection = mysql.connector.connect(host=mysql_host,
+                                            port=3306,
+                                            database=mysql_database,
+                                            user=mysql_user,
+                                            password=mysql_password)
+
+        # Create a cursor object to interact with the database
+        cursor = connection.cursor()
+        # Query the database to check if the username already exists
+        cursor.execute("SELECT COUNT(*) FROM sellercloud.users WHERE username = %s", (username,))
+        result = cursor.fetchone()
+
+        # Update the availability label
+        if result[0] > 0:
+            username_availability_label.config(text="Username is already taken!", fg="red")
+            username_availability.set("Username is already taken!")
+            # username_availability_label.config(fg="red")
+        else:
+            username_availability.set("Username is available")
+            username_availability_label.config(fg="green")
+        
+
+    initials_var = tk.StringVar()
+    initials_entry = tk.Entry(right_frame, font=("Helvetica", 14), textvariable=initials_var)
+    initials_entry.pack()
+    initials_entry.config(validate='key', validatecommand=(initials_entry.register(validate_initials), '%P'))
+    
+    # Create is_admin checkbox
+    is_admin_var = BooleanVar()
+    is_admin_checkbox = Checkbutton(right_frame, text="Is Admin", variable=is_admin_var, font=("Helvetica", 13), bg="#26242f", fg="#ffffff", activebackground="#26242f", selectcolor="#26242f")
+    is_admin_checkbox.pack(pady=10)
+    
+    # Create create user button
+    create_button = Button(right_frame, text="Create", font=("Helvetica", 14), bg="#26242f", fg="#ffffff", padx=20, pady=10, command=insert_user)
+    create_button.pack(pady=20)
+    create_button.config(cursor="hand2", relief=FLAT, background="#FFFFFF", foreground="#26242f", height=1)
+
+# def add_admin_confirm(is_admin_checkbox, is_admin):
+#     # check if the checkbox was selected or deselected
+#     if is_admin.get() == 1:
+#         # if the checkbox was selected, show a confirmation message
+#         response = messagebox.askquestion("Admin Confirmation", "Are you sure you want to make this user an admin?")
+#         if response == "no":
+#             is_admin_checkbox.deselect()
+#             is_admin_checkbox.config(fg="red")
+#         else:
+#             is_admin_checkbox.config(fg="#bfd660")
+        
+    
 def fetch_data(listbox):
     global selected_button, server_button, ws_button, other_button, background_color, original_items
     # change all three buttons to default state
@@ -212,7 +434,6 @@ def fetch_chassis_with_harvest_parts(listbox):
         cursor.close()
         connection.close()
 
-
 def fetch_chassis_without_harvest_parts(listbox):
     # Connect to the MySQL database
     connection = mysql.connector.connect(host=mysql_host,
@@ -257,7 +478,6 @@ def fetch_chassis_without_harvest_parts(listbox):
         # Close the cursor and the connection
         cursor.close()
         connection.close()
-
         
 def fetch_and_update_labels(event, listbox, value1, value2, table1):
     if event.state == 4:  # check if Control key is held down
@@ -534,9 +754,6 @@ def fetch_sku(search_box, listbox):
         cursor.close()
         connection.close()
 
-
-
-
 def flash_color(color, duration):
     print("flash_color function called")
     # Create the popup window
@@ -576,7 +793,6 @@ def flash_color(color, duration):
     popup.lift()
     fade_in(0.0)
     popup.after(duration, lambda: fade_out(1.0))
-
     
 def add_to_harvestable(event, table2, table1, value1):
     if btn_add_to_harvest['state'] == tk.DISABLED:
@@ -660,7 +876,6 @@ def add_to_harvestable(event, table2, table1, value1):
     else:
         messagebox.showwarning(title='Warning', message='Please select a chassis first.')
 
-
 def remove_from_harvestable(event, table1, table2, value1):
     if btn_remove_harvest['state'] == tk.DISABLED:
         return
@@ -714,14 +929,12 @@ def remove_from_harvestable(event, table1, table2, value1):
             cursor.close()
             connection.close()
 
-
-
 import win32print
 
-def print_selected_row(event, table, selected_printer, qty_var, initials_entry):
+def print_selected_row(event, table, selected_printer, qty_var, initials):
     table = get_selected_table(table1, table2)
     printer_name = selected_printer.get()
-    initials = initials_entry.get()
+    # initials = initials_entry.get()
     # printer_name = "ZDesigner GX420d"
     # initials = "ML"
 
@@ -735,9 +948,9 @@ def print_selected_row(event, table, selected_printer, qty_var, initials_entry):
         messagebox.showwarning(title='Warning', message='Please enter a valid quantity.')
         return
 
-    if initials == "-" or initials == "":
-        messagebox.showwarning(title='Warning', message='Please enter your initials.')
-        return
+    # if initials == "-" or initials == "":
+    #     messagebox.showwarning(title='Warning', message='Please enter your initials.')
+    #     return
 
     # Get the selected row from the table
     qty = int(qty)
@@ -775,7 +988,6 @@ def get_selected_table(table1, table2):
     else:
         return None
 
-
 def get_printer_list():
     # Get a list of all printers installed on the system
     printers = win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS | win32print.PRINTER_INFO_1)
@@ -783,7 +995,6 @@ def get_printer_list():
     for printer in printers:
         printer_list.append(printer[2])
     return printer_list
-
        
 class SplashScreen(tk.Toplevel):
     def __init__(self, parent):
@@ -841,17 +1052,179 @@ def increment_progress(progress, seconds, root):
     except Exception as e:
         print(e)
 
-        
-def show_splash_and_fetch_data(root, listbox):
-    try:
-        # Hide the main window
-        root.state('zoomed')
-        root.withdraw()
-        
+def switch_user():
+    login_window = tk.Toplevel()
+    login_window.title("Switch User Form")
+    login_window.geometry("800x550")
+    login_window.resizable(False, False)
 
+    # Create left frame
+    left_frame = Frame(login_window, bg="#1b1923")
+    left_frame.place(relx=0, rely=0, relwidth=0.5, relheight=1)
+
+    # Set logo image in the center of the left frame
+    logo_image = PhotoImage(file="C:\\HarvestAudit\\images\\logo\\PCSP_Original_website_header_tight_crop_250px.png")
+    logo_label = Label(left_frame, image=logo_image, bg="#1b1923")
+    logo_label.place(relx=0.5, rely=0.5, anchor=CENTER)
+
+    # Create right frame
+    right_frame = Frame(login_window, bg="#26242f")
+    right_frame.place(relx=0.5, rely=0, relwidth=0.5, relheight=1)
+
+    blank_frame = Frame(right_frame, bg="#26242f")
+    blank_frame.pack(pady=60)
+
+    # Create "Switch User" label in the right frame
+    welcome_label = Label(right_frame, text="Switch User", font=("Helvetica", 32), fg="#bfd660", bg="#26242f")
+    welcome_label.pack(pady=10)
+
+    # Create username label and entry widget
+    username_label = Label(right_frame, text="Username", font=("Helvetica", 13, "bold"), fg="#315954", bg="#26242f")
+    username_label.pack(pady=10)
+    username_entry = Entry(right_frame, font=("Helvetica", 14))
+    username_entry.pack()
+
+    # Create password label and entry widget
+    password_label = Label(right_frame, text="Password", font=("Helvetica", 13, "bold"), fg="#315954", bg="#26242f")
+    password_label.pack(pady=10)
+    password_entry = Entry(right_frame, show="*", font=("Helvetica", 14))
+    password_entry.pack()
+
+    # Create login button
+    def check_login():
+        # Get the entered username and password
+        username = username_entry.get()
+        password = password_entry.get()
+
+        # Connect to the database
+        connection = mysql.connector.connect(host=mysql_host,
+                                             port=3306,
+                                             database=mysql_database,
+                                             user=mysql_user,
+                                             password=mysql_password)
+
+        # Create a cursor object to interact with the database
+        cursor = connection.cursor()
+
+        # Hash the password
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+        # Check if the entered username and password are valid
+        cursor.execute('SELECT is_admin, initials FROM sellercloud.users WHERE username=%s AND password=%s', (username, hashed_password))
+        result = cursor.fetchone()
+
+        if result is None:
+            tk.messagebox.showerror("Error", "Invalid username or password")
+        else:
+            is_admin = result[0]
+            initials = result[1]
+            login_window.destroy()
+            if is_admin:
+                load_admin_user(username, initials)
+            else:
+                load_general_user(username, initials)
+            
+    login_button = tk.Button(right_frame, text="Login", font=("Helvetica", 14), bg="#26242f", fg="#ffffff", padx=20, pady=10, command=check_login)
+    login_button.pack(pady=20)
+    login_button.config(cursor="hand2", relief=tk.FLAT, background="#FFFFFF", foreground="#26242f", height=1)
+
+def show_login_screen():
+    root.withdraw()
+    # Create the login window
+    login_window = tk.Toplevel()
+    login_window.title("Login Form")
+    login_window.geometry("800x550")
+    login_window.resizable(False, False)
+
+    # Create left frame
+    left_frame = Frame(login_window, bg="#1b1923")
+    left_frame.place(relx=0, rely=0, relwidth=0.5, relheight=1)
+
+    # Set logo image in the center of the left frame
+    logo_image = PhotoImage(file="C:\\HarvestAudit\\images\\logo\\PCSP_Original_website_header_tight_crop_250px.png")
+    logo_label = Label(left_frame, image=logo_image, bg="#1b1923")
+    logo_label.place(relx=0.5, rely=0.5, anchor=CENTER)
+
+    # Create right frame
+    right_frame = Frame(login_window, bg="#26242f")
+    right_frame.place(relx=0.5, rely=0, relwidth=0.5, relheight=1)
+
+    blank_frame = Frame(right_frame, bg="#26242f")
+    blank_frame.pack(pady=60)
+
+    # Create "Welcome!" label in the right frame
+    welcome_label = Label(right_frame, text="Harvest Audit", font=("Helvetica", 32), fg="#bfd660", bg="#26242f")
+    welcome_label.pack(pady=10)
+
+    # Create username label and entry widget
+    username_label = Label(right_frame, text="Username", font=("Helvetica", 13, "bold"), fg="#315954", bg="#26242f")
+    username_label.pack(pady=10)
+    username_entry = Entry(right_frame, font=("Helvetica", 14))
+    username_entry.pack()
+
+    # Create password label and entry widget
+    password_label = Label(right_frame, text="Password", font=("Helvetica", 13, "bold"), fg="#315954", bg="#26242f")
+    password_label.pack(pady=10)
+    password_entry = Entry(right_frame, show="*", font=("Helvetica", 14))
+    password_entry.pack()
+
+    def on_close():
+        # Close the entire application when the login screen is closed
+        root.quit()
+
+    login_window.protocol("WM_DELETE_WINDOW", on_close)
+
+
+    # Create login button
+    def check_login():
+        # Get the entered username and password
+        username = username_entry.get()
+        password = password_entry.get()
+
+        # Connect to the database
+        connection = mysql.connector.connect(host=mysql_host,
+                                             port=3306,
+                                             database=mysql_database,
+                                             user=mysql_user,
+                                             password=mysql_password)
+
+        # Create a cursor object to interact with the database
+        cursor = connection.cursor()
+
+        # Hash the password
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+        # Check if the entered username and password are valid
+        cursor.execute('SELECT is_admin, initials FROM sellercloud.users WHERE username=%s AND password=%s', (username, hashed_password))
+        result = cursor.fetchone()
+
+        if result is None:
+            tk.messagebox.showerror("Error", "Invalid username or password")
+        else:
+            is_admin = result[0]
+            initials = result[1]
+            login_window.destroy()
+            show_splash_and_fetch_data(root, listbox, is_admin, username, initials)
+            
+
+    login_button = tk.Button(right_frame, text="Login", font=("Helvetica", 14), bg="#26242f", fg="#ffffff", padx=20, pady=10, command=check_login)
+    login_button.pack(pady=20)
+    login_button.config(cursor="hand2", relief=tk.FLAT, background="#FFFFFF", foreground="#26242f", height=1)
+
+def show_splash_and_fetch_data(root, listbox, is_admin, username, initials):
+    try:
+               
+        # Check the login status
+        if is_admin:
+            # Unlock advanced features
+            load_user("admin", username, initials)
+        else:
+            # Lock advanced features
+            load_user("user", username, initials)
+            
         # Show the splash screen
         splash = SplashScreen(root)
-        
+                
         # Schedule the data fetching and progress bar updates
         root.after(0, fetch_data, listbox)
         increment_progress(splash.progress, 8, root)
@@ -861,6 +1234,16 @@ def show_splash_and_fetch_data(root, listbox):
     except Exception as e:
         print(e)
 
+def load_user(user_type, username, initials):
+    
+    if user_type == "admin":
+        # Unlock advanced features
+        load_admin_user(username, initials)
+        pass
+    else:
+        # Lock advanced features
+        load_general_user(username, initials)
+    
 def load_data():
     try:
         with open('data.json', 'r') as f:
@@ -891,7 +1274,29 @@ def load_data():
         messagebox.showerror(title='Error', message='Error loading saved data.')
         print(f"Error loading saved data: {e}")
 
-
+def load_general_user(username, init):
+    global btn_add_to_harvest, btn_remove_harvest, btn_edit_max_qty, user_label, create_user_btn, initials
+    user_label.config(text=username.upper(), fg=highlight_color)
+    initials.config(text=init.upper())
+    btn_add_to_harvest.pack_forget()
+    btn_remove_harvest.pack_forget()
+    btn_edit_max_qty.pack_forget()
+    create_user_btn.pack_forget()
+    
+def load_admin_user(username, init):
+    if len(init) != 2:
+        init = "XX"
+    global btn_add_to_harvest, btn_remove_harvest, btn_edit_max_qty, user_label, button_bar2, create_user_btn, initials
+    messagebox.showinfo("Admin Login", "Welcome, administrator! Please be aware that with great power comes great responsibility. As an admin, you have access to sensitive features and information that should be used with care. Please ensure that you are authorized to perform any actions you take.")
+    user_label.config(text=username.upper(), fg='red')
+    initials.config(text=init.upper())
+    btn_add_to_harvest.pack(side='right', padx=10, pady=10)
+    btn_remove_harvest.pack(side='right', padx=10, pady=10)
+    btn_edit_max_qty.pack(side='right', padx=10, pady=10)
+    create_user_btn.pack(padx=10, pady=10)
+    init_button(create_user_btn, "", "left")
+    
+    
 def on_closing():
     # stop all running threads
     for thread in threading.enumerate():
@@ -931,13 +1336,22 @@ def update_listbox(listbox, search_term):
                 listbox.insert(tk.END, item)
       
 def on_double_click(event, treeview):
+    global table2
     item_id = treeview.identify_row(event.y)
     column_id = treeview.identify_column(event.x)
-
-    if item_id and column_id:
-        cell_value = treeview.set(item_id, column_id)
-        pyperclip.copy(cell_value)
-        print(f'Copied: {cell_value}')          
+    
+    if treeview is table2:
+        if item_id and column_id:
+            cell_value = treeview.set(item_id, column_id)
+            pyperclip.copy(cell_value)
+            print(f'Copied: {cell_value}')
+        else:
+            selected_item = treeview.selection()
+            if selected_item:
+                values = treeview.item(selected_item, 'values')
+                if len(values) > 1 and values[1].lower() == "1100w clear handle":
+                  # set the value of parts_search_box2 which uses parts_search_var2 to "1100W Clear Handle"
+                  parts_search_var2.set("1100W Clear Handle")   
 
 def update_max_qty_database(sku: str, max_qty: int):
     try:
@@ -1033,22 +1447,19 @@ def select_case_component(event):
 def on_search_box_change():
     search_list(listbox, search_box)
     
-
 def on_search_box_enter(event, listbox, search_box):
     # Get the search term
     search_term = search_box.get().lower()
 
     # Update the listbox
     update_listbox(listbox, search_term)
-    
-    
+        
 def search_list(listbox, search_box):
     # Get the search term
     search_term = search_box.get().lower()
 
     # Update the listbox
     update_listbox(listbox, search_term)
-
         
 def init_button(btn, product_type, side):
     global server_button, ws_button, other_button, selected_button
@@ -1127,8 +1538,6 @@ def scroll_treeview(event):
                     table2.see(next_item)
     except Exception as e:
         print("No items in table2")
-
-
 
 # bind key events to increment/decrement quantity
 def on_key(event):
@@ -1324,7 +1733,7 @@ icon_photo_list = []
 # root.attributes("-fullscreen", True)
 
 # # remove maximize button
-root.state("zoomed")
+# root.state("zoomed")
 
 # add exit button to top bar
 # root.protocol("WM_DELETE_WINDOW", on_closing)
@@ -1359,9 +1768,28 @@ canvas = tk.Canvas(image_frame, width=96, height=64, bg='#26242f', highlightthic
 canvas.pack(side='left')
 canvas.create_image(0, 0, anchor=tk.NW, image=pcsp_logo)
 
-admin_button = tk.Button(image_frame, text="Unlock Admin", command=login_as_admin)
-admin_button.pack()
-init_button(admin_button, "", 'left')
+
+user_frame = tk.Frame(image_frame, bg='#26242f')
+user_frame.pack(side='right')
+user_icon_path = "C:\\HarvestAudit\\images\\icon\\user.png"
+user_icon = Image.open(user_icon_path)
+user_icon = user_icon.resize((35, 35), Image.ANTIALIAS)
+
+user_icon = ImageTk.PhotoImage(user_icon)
+
+# Create a canvas for the image
+canvas2 = tk.Canvas(user_frame, width=35, height=35, bg='#26242f', highlightthickness=0)
+canvas2.pack(side='left', padx=(10, 0))
+canvas2.create_image(0, 0, anchor=tk.NW, image=user_icon)
+
+user_label = tk.Button(user_frame, text="Unlock Admin", command=switch_user)
+user_label.pack(fill='both', expand=True, side='left')
+user_label.config(background='#26242f', fg='white', font=("Helvetica", 22, "bold"), borderwidth=0)
+user_frame.bind("<Enter>", lambda event: on_widget_enter(event, user_label))
+user_frame.bind("<Leave>", lambda event: on_widget_leave(event, user_label))
+
+create_user_btn = tk.Button(image_frame, text="Create User", command=create_user)
+
 
 # sc_logo_path = "C:\HarvestAudit\images\logo\SC_Original.png"
 # sc_logo = Image.open(sc_logo_path)
@@ -1533,12 +1961,12 @@ qty_label.config(background=background_color, foreground=white_foreground_color,
 qty_entry.config(background=background_color, foreground=white_foreground_color, font=('Arial', 12, 'bold'))
 
 initials_label = tk.Label(button_bar2, text="Initials:")
-initials_var = tk.StringVar(value="-")
-initials_entry = tk.Entry(button_bar2, textvariable=initials_var, width=5)
 initials_label.config(background=background_color, foreground=white_foreground_color, font=('Arial', 12, 'bold'))
-initials_entry.config(background=background_color, foreground=white_foreground_color, font=('Arial', 12, 'bold'))
 initials_label.pack(side='left')
-initials_entry.pack(side='left')
+
+initials = tk.Label(button_bar2, text="")
+initials.config(background=background_color, foreground=white_foreground_color, font=('Arial', 12, 'bold'))
+initials.pack(side='left')
 
 printers = get_printer_list()
 
@@ -1567,16 +1995,11 @@ btn_view_on_sellercloud.pack(side='right', padx=(50, 5), pady=10)
 btn_view_on_sellercloud.config(background=blue_foreground_color)
 
 btn_add_to_harvest = tk.Button(button_bar2, text='Add to Harvestable')
-btn_add_to_harvest.pack(side='right', padx=10, pady=10)
-btn_add_to_harvest.config(background=highlight_color, state=tk.NORMAL)
 
 btn_remove_harvest = tk.Button(button_bar2, text='Remove from Harvestable')
-btn_remove_harvest.pack(side='right', padx=10, pady=10)
-btn_remove_harvest.config(background='red', state=tk.NORMAL)
 
 btn_edit_max_qty = tk.Button(button_bar2, text='Edit Max Qty')
-btn_edit_max_qty.pack(side='right', padx=10, pady=10)
-btn_edit_max_qty.config(background=blue_foreground_color)
+
 
 # init_button(btn_print, "", "right")
 
@@ -1626,7 +2049,7 @@ table2.column("Max Qty", width=80, anchor="center")
 
 # WIDGET BINDINGS ************************************************************
 root.bind("<KeyPress>", on_key)
-root.bind("<Control-p>", lambda event: print_selected_row(event, selected_table, menu, qty_var, initials_entry))
+root.bind("<Control-p>", lambda event: print_selected_row(event, selected_table, menu, qty_var, initials.cget('text')))
 
 canvas.bind("<Enter>", on_widget_enter)
 canvas.bind("<Leave>", on_widget_leave)
@@ -1644,7 +2067,7 @@ listbox.bind("<ButtonRelease-1>", lambda event: fetch_and_update_labels(event, l
 btn_view_on_google.bind('<Enter>', lambda event: on_widget_enter)
 btn_view_on_google.bind('<Leave>', lambda event: on_widget_leave)
 btn_view_on_google.bind('<ButtonRelease-1>', lambda event: view_on_google(selected_table, value1))
-btn_print.bind('<ButtonRelease-1>', lambda event: print_selected_row(event, selected_table, menu, qty_var, initials_entry))
+btn_print.bind('<ButtonRelease-1>', lambda event: print_selected_row(event, selected_table, menu, qty_var, initials.cget('text')))
 btn_view_on_sellercloud.bind('<Enter>', lambda event: on_widget_enter)
 btn_view_on_sellercloud.bind('<Leave>', lambda event: on_widget_leave)
 btn_view_on_sellercloud.bind('<ButtonRelease-1>', lambda event: view_on_sellercloud(selected_table))
@@ -1670,17 +2093,15 @@ parts_search_box2.bind("<Down>", scroll_treeview)
 parts_search_box2.bind("<Return>", lambda event: print_selected_row(event, selected_table, menu, qty_var, initials_entry))
 
 table1.bind('<ButtonRelease-1>', lambda event: table_select(table1, btn_add_to_harvest))
+table1.bind('<Double-1>', lambda event: on_double_click(event, table1))
 table2.bind('<Double-1>', lambda event: on_double_click(event, table2))
 
 table2.bind('<ButtonRelease-1>', lambda event: table_select(table2, btn_add_to_harvest))
 
 combo_box.bind("<<ComboboxSelected>>", select_case_component)
 
-show_splash_and_fetch_data(root, listbox)
-
-# load_data()
-
-# save_thread = threading.Thread(target=save_data)
-# save_thread.start()
-
+show_login_screen()
+btn_add_to_harvest.config(background=highlight_color, state=tk.NORMAL)
+btn_remove_harvest.config(background='red', state=tk.NORMAL)
+btn_edit_max_qty.config(background=blue_foreground_color)
 root.mainloop()

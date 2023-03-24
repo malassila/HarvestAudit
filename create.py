@@ -5,7 +5,7 @@ mysql_database = 'sellercloud'
 mysql_user = 'python'
 mysql_password = 'ghXryPCSP2022!'
 # Get the plain text password from the user
-password = mysql_password
+password = 'pcspuser'
 
 # Hash the password
 hashed_password = hashlib.sha256(password.encode()).hexdigest()
@@ -19,5 +19,5 @@ connection = mysql.connector.connect(host=mysql_host,
 # Create a cursor object to interact with the database
 cursor = connection.cursor()
 # Insert the username and hashed password into the database
-cursor.execute("INSERT INTO sellercloud.users (username, password, is_admin) VALUES (%s, %s, %s)", ('admin', hashed_password, True))
+cursor.execute("INSERT INTO sellercloud.users (username, password, is_admin) VALUES (%s, %s, %s)", (username, hashed_password, is_admin))
 connection.commit()

@@ -23,11 +23,27 @@ def on_search_box_focus_in(event, search_box):
 def on_search_box_focus_out(event, search_box):
     search_box.config(bg='#5c596b', fg=white_foreground_color)
     
-def on_widget_enter(event):
-    event.widget.config(cursor="hand2")
+def on_widget_enter(event, widget2=None, widget3=None, widget4=None):
+    try:
+        event.widget.config(cursor="hand2")
+        event.widget.config(relief=tk.RAISED)
+        event.widget.config(bg="#3c3a43")
+        widget2.config(bg="#3c3a43")
+        widget3.config(bg="#3c3a43")
+        widget4.config(bg="#3c3a43")
+    except Exception as e:
+        print(e)
 
-def on_widget_leave(event):
-    event.widget.config(cursor="")
+def on_widget_leave(event, widget2=None, widget3=None, widget4=None):
+    try:
+        event.widget.config(cursor="")
+        event.widget.config(relief=tk.SUNKEN)
+        event.widget.config(bg=background_color)
+        widget2.config(bg=background_color)
+        widget3.config(bg=background_color)
+        widget4.config(bg=background_color)
+    except Exception as e:
+        print(e)
 
 def on_hover(event, widget):
     event.widget.config()
